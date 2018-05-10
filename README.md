@@ -1,4 +1,4 @@
---This contains current developement. It's for test purposeses and can containt issues !
+--This contains current development. It's for test purposes and can contain issues !
 
 
 Description
