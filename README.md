@@ -1,3 +1,6 @@
+--This contains current developement. It's for test purposeses and can containt issues !
+
+
 Description
 
 The main focus lies on targeting party members properly with '@party' macros with the default Blizzard Frame. 

@@ -52,7 +52,7 @@ local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "Ga
 
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame); 
-local intern_version = "4.1";
+local intern_version = "4.1.01";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version
 local intern_author = "Collabo93"
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author
@@ -372,8 +372,8 @@ local function SortInterstation(ExternSwitch)
 		if ( defaultValues_DB.Top == true or defaultValues_DB.Bottom == true ) then
 			if ( ProfileExists(defaultValues_DB.Profile) == false ) then
 				if ( defaultValues_DB.ChatMessagesOn == true ) then
-					local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", defaultValues_DB.Profile);
 					defaultValues_DB.Profile = GetRaidProfileName(1);
+					local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", defaultValues_DB.Profile);			
 					print(ColorText(cachePrintSendSortOptionToSortBy:gsub("'replacement2'", defaultValues_DB.Profile), "option"));
 				end
 				UIDropDownMenu_SetText(Main_ddm_Profiles, defaultValues_DB.Profile);
