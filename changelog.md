@@ -1,4 +1,5 @@
 v4.1
+	
 	Release tag
 	Fixed an issue which caused sometimes the popup to get spam displayed
 	Clean database reset
