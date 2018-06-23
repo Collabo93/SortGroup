@@ -41,9 +41,10 @@ local changeableValues_DB = {
 -- Options, which are only changeable here atm. These can cause taint and errors, but can also be useful. Activate on own "risk"  
 
 local internValues_DB = {
-	showChatMessages = false; -- true when "PLAYER_ENTERING_WORLD" fired or cb Event gets triggered
-	inCombat = false; -- true when "PLAYER_REGEN_DISABLED" fired	
-	ddmItems = {}; -- ddm content
+	showChatMessages = false, -- true when "PLAYER_ENTERING_WORLD" fired or cb Event gets triggered
+	inCombat = false, -- true when "PLAYER_REGEN_DISABLED" fired	
+	ddmItems = {}, -- ddm content
+	GroupMembersOfC = 0
 }
 
 
@@ -52,7 +53,7 @@ local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "Ga
 
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame); 
-local intern_version = "4.1.01";
+local intern_version = "4.1.12";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version
 local intern_author = "Collabo93"
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author
@@ -371,9 +372,9 @@ local function SortInterstation(ExternSwitch)
 	if ( defaultValues_DB.AlwaysActive == false ) then
 		if ( defaultValues_DB.Top == true or defaultValues_DB.Bottom == true ) then
 			if ( ProfileExists(defaultValues_DB.Profile) == false ) then
+				defaultValues_DB.Profile = GetRaidProfileName(1);
 				if ( defaultValues_DB.ChatMessagesOn == true ) then
-					defaultValues_DB.Profile = GetRaidProfileName(1);
-					local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", defaultValues_DB.Profile);			
+					local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", defaultValues_DB.Profile);
 					print(ColorText(cachePrintSendSortOptionToSortBy:gsub("'replacement2'", defaultValues_DB.Profile), "option"));
 				end
 				UIDropDownMenu_SetText(Main_ddm_Profiles, defaultValues_DB.Profile);
@@ -735,9 +736,11 @@ local function frameEvent()
 			elseif ( event == "PLAYER_REGEN_DISABLED" ) then
 				Debug("PLAYER_REGEN_DISABLED", "", 2);
 				internValues_DB.inCombat = true;
+				internValues_DB.GroupMembersOfC = GetNumGroupMembers();
 			elseif ( event == "PLAYER_REGEN_ENABLED" ) then
 				Debug("PLAYER_REGEN_ENABLED", "", 2);
 				internValues_DB.inCombat = false;
+				internValues_DB.GroupMembersOfC = 0;
 				for k, v in pairs(UpdateTable) do
 					UpdateTable[k] = nil
 					_G[v](_G[k])
@@ -753,6 +756,21 @@ local function frameEvent()
 					SortInterstation(true);
 				else
 					SortInterstation(false);
+				end
+				if ( internValues_DB.inCombat == true ) then
+					local cacheText = L["SortGroup_numberOfMembers_output"];
+					cacheText = cacheText:gsub("'replacement'", GetNumGroupMembers());
+					if ( (GetNumGroupMembers() - internValues_DB.GroupMembersOfC) > 0 ) then
+						cacheText = cacheText:gsub("'replacement2'", ColorText( (GetNumGroupMembers() - internValues_DB.GroupMembersOfC), "green" ) );
+					elseif ( (GetNumGroupMembers() - internValues_DB.GroupMembersOfC) < 0 ) then
+						cacheText = cacheText:gsub("'replacement2'", ColorText( (GetNumGroupMembers() - internValues_DB.GroupMembersOfC), "red" ) );
+					else
+						cacheText = cacheText:gsub("'replacement2'", (GetNumGroupMembers() - internValues_DB.GroupMembersOfC) );
+					end
+					print(ColorText(cacheText, "option"));
+					--print("Actuall members: "..GetNumGroupMembers().." , displayed members: ".. (GetNumGroupMembers() - internValues_DB.GroupMembersOfC) );
+				else
+					internValues_DB.GroupMembersOfC = 0;
 				end
 			elseif ( event == "COMPACT_UNIT_FRAME_PROFILES_LOADED" ) then
 				Debug("COMPACT_UNIT_FRAME_PROFILES_LOADED", "", 2)
