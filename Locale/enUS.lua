@@ -40,3 +40,5 @@ L["SortGroup_Option_cb_RaidProfilesUpdateInCombat_ToolTip"] = "If enabled: Blizz
 L["SortGroup_Keep_Group_Together_Active_output"] = "SortGroup: Deactivate 'Keep Groups Together' in your Raid Profiles, otherwise your Group can't get sorted"
 L["Sortgroup_reset_output"] = "SortGroup: In order to work properly with the new version, Sortgroup has been reset. You may want to check your options\n\nAdditionally the 'Auto-Activate Raid Profiles On' modul has been moved to the addon 'ProfileSwitcher'"
 L["SortGroup_numberOfMembers_output"] = "SortGroup: Number of group members: 'replacement'('replacement2')" 
+L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"] = "Number of group members"
+L["SortGroup_Option_cb_ShowGroupMembersInCombat_ToolTip"] = "Displays the actuall number of group members if you are in combat.\n\nNote:\nThis option is independent from 'Chat messages'"
