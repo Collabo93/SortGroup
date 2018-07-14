@@ -1,7 +1,7 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("SortGroup", "deDE")
 if not L then return end
 
-L["SortGroup_Main_cb_Top_Text"] = "Spieler oben";
+L["SortGroup_Main_cb_Top_Text"] = "Spieler oben"
 L["SortGroup_Main_cb_Bottom_Text"] = "Spieler unten"
 L["SortGroup_Main_cb_Descending_Text"] = "Absteigend"
 L["SortGroup_Main_cb_Ascending_Text"] = "Aufsteigend"
@@ -14,7 +14,7 @@ L["SortGroup_Main_cb_Bottom_ToolTip"] = "Du bist an letzter Stelle deiner Gruppe
 L["SortGroup_Main_cb_Descending_ToolTip"] = "Party 1-4 werden nach unten sortiert"
 L["SortGroup_Main_cb_Ascending_ToolTip"] = "Party 1-4 werden nach oben sortiert"
 L["SortGroup_Main_cb_AutoActivate_ToolTip"] = "Dein gewähltes Schlachtzugsprofil wird immer, mit deinen gewählten Optionen, in <= 5 Mann-Gruppen geladen"
-L["SortGroup_Main_cb_AlwaysActive_ToolTip"] = "Dein aktuelles Schlachtzugsprofil ist unwichtig. SortGroup ist immer aktiv";
+L["SortGroup_Main_cb_AlwaysActive_ToolTip"] = "Dein aktuelles Schlachtzugsprofil ist unwichtig. SortGroup ist immer aktiv"
 L["SortGroup_Main_ddm_Profiles_Text"] = "Sortiere Schlachtzugsprofil"
 L["SortGroup_Main_ddm_Profiles_ToolTip"] = "Schlachtzugsprofil, dass sortiert werden soll.\n\nHinweis:\nWenn 'Lade Schlachtzugsprofil' nicht aktiviert ist, musst du eigenständig dein Schlachtzugsprofile aktivieren"
 L["SortGroup_Main_cb_ChatMessagesOn_ToolTip"] = "Chat Nachrichten an/aus";
@@ -29,8 +29,8 @@ L["SortGroup_sort_bottom_ascending_AlwaysActive_output"] = "SortGroup: Alle Schl
 L["SortGroup_sort_chat_Messages_On_output"] = "SortGroup: Chat Nachrichten sind an"
 L["SortGroup_sort_no_output"] = "SortGroup: Sortierfunktion ist nicht aktiv"
 L["SortGroup_in_combat_options_output"] = "SortGroup: Verlasse den Kampf, um Optionen ändern zu können"
-L["SortGroup_RaidProfil_dont_exists_output"] = "SortGroup: Raid Profil \"'replacement'\" existiert nicht mehr. Neues als Standard ist \"'replacement2'\"";
-L["SortGroup_RaidProfil_changed_output"] = "SortGroup: Schlachtzugsprofil wurde auf \"'replacement'\" gewechselt";
+L["SortGroup_RaidProfil_dont_exists_output"] = "SortGroup: Raid Profil \"'replacement'\" existiert nicht mehr. Neues als Standard ist \"'replacement2'\""
+L["SortGroup_RaidProfil_changed_output"] = "SortGroup: Schlachtzugsprofil wurde auf \"'replacement'\" gewechselt"
 L["SortGroup_RaidProfil_Doesnt_match_output"] = "SortGroup: Dein aktuelles Schlachtzugsprofile stimmt nicht mit deinem gewählten überein"
 L["SortGroup_Option_Frame_Text"] = "Optionen"
 L["SortGroup_Option_Text_General_Text"] = "Allgemein"
@@ -42,3 +42,8 @@ L["Sortgroup_reset_output"] = "SortGroup: Um die Funktionsfähigkeit mit dem neu
 L["SortGroup_numberOfMembers_output"] = "SortGroup: Anzahl Gruppenmitglieder 'replacement'('replacement2')" 
 L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"] = "Anzahl Gruppenmitglieder"
 L["SortGroup_Option_cb_ShowGroupMembersInCombat_ToolTip"] = "Zeigt die tatsächliche Anzahl an Gruppenmitgliedern in Kampf.\n\nBemerkung:\nDiese Option ist unanhängig von 'Chat Nachrichten'"
+L["SortGroup_Option_Text_Extra_Text"] = "Extras"
+L["SortGroup_Option_btn_SetDefault_Text"] = "Setze Standard"
+L["SortGroup_Option_btn_Reset_Text"] = "Reset"
+L["SortGroup_Option_btn_SetDefault_ToolTip"] = "Deine aktuell gewählten Einstellungen werden die neuen Standardoptionen sein"
+L["SortGroup_Option_btn_Reset_ToolTip"] = "Resete Sortgroup"

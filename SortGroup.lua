@@ -1,4 +1,5 @@
 SortGroupInformation = {};
+SortGroupDefaults = {};
 local L = LibStub("AceLocale-3.0"):GetLocale("SortGroup")
 local UpdateTable = {}
 
@@ -54,13 +55,14 @@ local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "Ga
 
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame); 
-local intern_version = "4.1.2";
+local intern_version = "4.2";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version
 local intern_author = "Collabo93"
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author
 
 local Option_Text_General = CreateFrame("SimpleHTML", "OptionTextGeneral", Option_Frame);
 local Option_Text_Combat = CreateFrame("SimpleHTML", "OptionTextCombat", Option_Frame);
+local Option_Text_Utility = CreateFrame("SimpleHTML", "OptionTextUtility", Option_Frame);
 -- Text
 
 local Main_cb_Top = CreateFrame("CheckButton", "MainCbTop", Main_Frame, "UICheckButtonTemplate");
@@ -77,7 +79,9 @@ local Option_cb_RaidProfilesUpdateInCombat = CreateFrame("CheckButton", "OptionC
 local Option_cb_ShowGroupMembersInCombat = CreateFrame("CheckButton", "OptionCbShowGroupMembersInCombat", Option_cb_RaidProfilesUpdateInCombat, "UICheckButtonTemplate");
 -- Combo-box Options
 
-local Main_btn_Reload = CreateFrame("Button", "MainBtnReload", Option_Frame, "UIPanelButtonTemplate");
+local Option_btn_SetDefault = CreateFrame("Button", "OptionBtnSetDefault", Option_Text_Utility, "UIPanelButtonTemplate");
+local Option_btn_Reset = CreateFrame("Button", "OptionBtnReset", Option_Text_Utility, "UIPanelButtonTemplate");
+local Option_btn_Reload = CreateFrame("Button", "OptionBtnReload", Option_Text_Utility, "UIPanelButtonTemplate");
 -- Button
 
 local Main_ddm_Profiles = CreateFrame("Button", "MainDdmProfiles", Main_cb_AutoActivate, "UIDropDownMenuTemplate");
@@ -638,10 +642,15 @@ local function createText()
 	Option_Text_General:SetText(L["SortGroup_Option_Text_General_Text"]);
 	Option_Text_General:SetSize(string.len(L["SortGroup_Option_Text_General_Text"]), 10);
 	
-	Option_Text_Combat:SetPoint("TOPLEFT", 40, -170);
+	Option_Text_Combat:SetPoint("TOPLEFT", 40, -190);
 	Option_Text_Combat:SetFontObject(GameFontHighlightMedium);
 	Option_Text_Combat:SetText(L["SortGroup_Option_Text_Combat_Text"]);
 	Option_Text_Combat:SetSize(string.len(L["SortGroup_Option_Text_Combat_Text"]), 10);
+	
+	Option_Text_Utility:SetPoint("TOPLEFT", 350, -80);
+	Option_Text_Utility:SetFontObject(GameFontHighlightMedium);
+	Option_Text_Utility:SetText(L["SortGroup_Option_Text_Extra_Text"]);
+	Option_Text_Utility:SetSize(string.len(L["SortGroup_Option_Text_Extra_Text"]), 10);
 end
 
 local function createCheckbox()	
@@ -676,9 +685,20 @@ end
 local function createButton()
 	Debug("createButton", "", 2);
 	
-	Main_btn_Reload:SetSize(120, 24);
-	Main_btn_Reload:SetText(L["SortGroup_Option_btn_Reload_Text"]);
-	Main_btn_Reload:SetPoint("TOPLEFT", 450, -300)
+	Option_btn_SetDefault:SetSize(100, 20);
+	Option_btn_SetDefault:SetText(L["SortGroup_Option_btn_SetDefault_Text"]);
+	Option_btn_SetDefault:SetPoint("TOPLEFT", 15, -30)
+	
+	Option_btn_Reset:SetSize(100, 20);
+	Option_btn_Reset:SetText(L["SortGroup_Option_btn_Reset_Text"]);
+	Option_btn_Reset:SetPoint("TOPLEFT", 120, -30)
+	
+	Option_btn_Reload:SetSize(100, 20);
+	Option_btn_Reload:SetText(L["SortGroup_Option_btn_Reload_Text"]);
+	Option_btn_Reload:SetPoint("TOPLEFT", 15, -60)
+	
+	--local Option_btn_SetDefault = CreateFrame("Button", "OptionBtnSetDefault", Option_Frame, "UIPanelButtonTemplate");
+--local Option_btn_Reset = CreateFrame("Button", "OptionBtnReset", Option_Frame, "UIPanelButtonTemplate");
 end
 
 local function createDropDownMenu()
@@ -753,56 +773,60 @@ local function loadData()
 		Debug("loadData", "new db", 3);
 	end
 	
-	if ( SortGroupInformation.Top == nil ) then
-		SortGroupInformation.Top = defaultValues_DB.Top;
-		Debug("loadData", "Top = nil", 3);
+	if ( CountTable(SortGroupDefaults) == 13 ) then
+		defaultValues_DB = SortGroupDefaults;
+	else
+		if ( SortGroupInformation.Top == nil ) then
+			SortGroupInformation.Top = defaultValues_DB.Top;
+			Debug("loadData", "Top = nil", 3);
+		end
+		if ( SortGroupInformation.TopDescending == nil ) then
+			SortGroupInformation.TopDescending = defaultValues_DB.TopDescending;
+			Debug("loadData", "TopDescending = nil", 3);
+		end
+		if ( SortGroupInformation.TopAscending == nil ) then
+			SortGroupInformation.TopAscending = defaultValues_DB.TopAscending;
+			Debug("loadData", "TopAscending = nil", 3);
+		end
+		if ( SortGroupInformation.Bottom == nil ) then
+			SortGroupInformation.Bottom = defaultValues_DB.Bottom;
+			Debug("loadData", "Bottom = nil", 3);
+		end
+		if ( SortGroupInformation.BottomDescending == nil ) then
+			SortGroupInformation.BottomDescending = defaultValues_DB.BottomDescending;
+			Debug("loadData", "BottomDescending = nil", 3);
+		end
+		if ( SortGroupInformation.BottomAscending == nil ) then
+			SortGroupInformation.BottomAscending = defaultValues_DB.BottomAscending;
+			Debug("loadData", "BottomAscending = nil", 3);
+		end
+		if ( SortGroupInformation.AutoActivate == nil ) then
+			SortGroupInformation.AutoActivate = defaultValues_DB.AutoActivate;
+			Debug("loadData", "AutoActivate = nil", 3);
+		end
+		if ( SortGroupInformation.AlwaysActive == nil ) then
+			SortGroupInformation.AlwaysActive = defaultValues_DB.AlwaysActive;
+			Debug("loadData", "AlwaysActive = nil", 3);
+		end
+		if ( SortGroupInformation.Profile == nil ) then
+			SortGroupInformation.Profile = defaultValues_DB.Profile;
+			Debug("loadData", "Profile = nil", 3);
+		end
+		if ( SortGroupInformation.ChatMessagesOn == nil ) then
+			SortGroupInformation.ChatMessagesOn = defaultValues_DB.ChatMessagesOn;
+			Debug("loadData", "ChatMessagesOn = nil", 3);
+		end
+		if ( SortGroupInformation.RaidProfileBlockInCombat == nil ) then
+			SortGroupInformation.RaidProfileBlockInCombat = defaultValues_DB.RaidProfileBlockInCombat;
+			Debug("loadData", "RaidProfileBlockInCombat = nil", 3);
+		end
+		if ( SortGroupInformation.ShowGroupMembersInCombat == nil ) then
+			SortGroupInformation.ShowGroupMembersInCombat = defaultValues_DB.ShowGroupMembersInCombat;
+			Debug("loadData", "ShowGroupMembersInCombat = nil", 3);
+		end
+		
+		defaultValues_DB = SortGroupInformation;
 	end
-	if ( SortGroupInformation.TopDescending == nil ) then
-		SortGroupInformation.TopDescending = defaultValues_DB.TopDescending;
-		Debug("loadData", "TopDescending = nil", 3);
-	end
-	if ( SortGroupInformation.TopAscending == nil ) then
-		SortGroupInformation.TopAscending = defaultValues_DB.TopAscending;
-		Debug("loadData", "TopAscending = nil", 3);
-	end
-	if ( SortGroupInformation.Bottom == nil ) then
-		SortGroupInformation.Bottom = defaultValues_DB.Bottom;
-		Debug("loadData", "Bottom = nil", 3);
-	end
-	if ( SortGroupInformation.BottomDescending == nil ) then
-		SortGroupInformation.BottomDescending = defaultValues_DB.BottomDescending;
-		Debug("loadData", "BottomDescending = nil", 3);
-	end
-	if ( SortGroupInformation.BottomAscending == nil ) then
-		SortGroupInformation.BottomAscending = defaultValues_DB.BottomAscending;
-		Debug("loadData", "BottomAscending = nil", 3);
-	end
-	if ( SortGroupInformation.AutoActivate == nil ) then
-		SortGroupInformation.AutoActivate = defaultValues_DB.AutoActivate;
-		Debug("loadData", "AutoActivate = nil", 3);
-	end
-	if ( SortGroupInformation.AlwaysActive == nil ) then
-		SortGroupInformation.AlwaysActive = defaultValues_DB.AlwaysActive;
-		Debug("loadData", "AlwaysActive = nil", 3);
-	end
-	if ( SortGroupInformation.Profile == nil ) then
-		SortGroupInformation.Profile = defaultValues_DB.Profile;
-		Debug("loadData", "Profile = nil", 3);
-	end
-	if ( SortGroupInformation.ChatMessagesOn == nil ) then
-		SortGroupInformation.ChatMessagesOn = defaultValues_DB.ChatMessagesOn;
-		Debug("loadData", "ChatMessagesOn = nil", 3);
-	end
-	if ( SortGroupInformation.RaidProfileBlockInCombat == nil ) then
-		SortGroupInformation.RaidProfileBlockInCombat = defaultValues_DB.RaidProfileBlockInCombat;
-		Debug("loadData", "RaidProfileBlockInCombat = nil", 3);
-	end
-	if ( SortGroupInformation.ShowGroupMembersInCombat == nil ) then
-		SortGroupInformation.ShowGroupMembersInCombat = defaultValues_DB.ShowGroupMembersInCombat;
-		Debug("loadData", "ShowGroupMembersInCombat = nil", 3);
-	end
-	
-	defaultValues_DB = SortGroupInformation;
 end
 
 local function frameEvent()
@@ -1241,7 +1265,31 @@ end
 local function buttonEvent()
 	Debug("buttonEvent", "", 2);
 	
-	Main_btn_Reload:SetScript("OnClick",
+	Option_btn_SetDefault:SetScript("OnClick",
+		function()
+			SortGroupDefaults = defaultValues_DB;
+	end);
+	Option_btn_SetDefault:SetScript("OnEnter", 
+		function(self)
+			GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+			GameTooltip:AddLine(L["SortGroup_Option_btn_SetDefault_Text"] .."\n\n" .. ColorText(L["SortGroup_Option_btn_SetDefault_ToolTip"], "white") , nil, nil, nil, 1);
+			GameTooltip:Show();
+		end);
+	Option_btn_SetDefault:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
+	
+	Option_btn_Reset:SetScript("OnClick",
+		function()
+			--ReloadUI();
+	end);
+	Option_btn_Reset:SetScript("OnEnter", 
+		function(self)
+			GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+			GameTooltip:AddLine(L["SortGroup_Option_btn_Reset_Text"] .."\n\n" .. ColorText(L["SortGroup_Option_btn_Reset_ToolTip"], "white") , nil, nil, nil, 1);
+			GameTooltip:Show();
+		end);
+	Option_btn_Reset:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
+	
+	Option_btn_Reload:SetScript("OnClick",
 		function()
 			ReloadUI();
 	end);
