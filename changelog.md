@@ -1,3 +1,17 @@
+v4.2
+	
+	Added a button to set new default values
+	Added a button to reset the addon
+	Adjusted buttons in option panel
+	Small code improvements
+
+v4.1.2
+
+	Fixed the addon for 8.x
+	Fixed an issue which potentially could cause lua errors
+	Fixed a misspelling in german language
+	Added a checkbox to display actual group members in chat, if the raid frames are blocked - by default disabled
+
 v4.1
 	
 	Release tag

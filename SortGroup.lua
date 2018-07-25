@@ -33,7 +33,7 @@ local changeableValues_DB = {
 	CatchProfileSwitchEvent = false,
 	--Experimental. If activated, every manual switch will automatically activate the sort function - to apply it to the new profile. This will cause issues !
 	DebugModeActive = false,
-	DebugModeLevel = 4
+	DebugModeLevel = 1
 	-- debugging, false = deactivated
 	-- 1 Options
 	-- 2 Events+Method Names
@@ -128,6 +128,7 @@ local function Debug(methodName, methodContent, methodLevel)
 				print("'defaultValues_DB.TopAscending' " .. tostring(defaultValues_DB.TopAscending));
 				print("'defaultValues_DB.Bottom' " .. tostring(defaultValues_DB.Bottom));
 				print("'defaultValues_DB.BottomDescending' " .. tostring(defaultValues_DB.BottomDescending));
+				print("'defaultValues_DB.BottomAscending' " .. tostring(defaultValues_DB.BottomAscending));
 				print("'defaultValues_DB.Profile' " .. tostring(defaultValues_DB.Profile));
 				print("'AutoActivate' " .. tostring(defaultValues_DB.AutoActivate));
 				print("'defaultValues_DB.AlwaysActive' " .. tostring(defaultValues_DB.AlwaysActive));
@@ -378,9 +379,12 @@ local function SortInterstation(ExternSwitch)
 	if ( defaultValues_DB.AlwaysActive == false ) then
 		if ( defaultValues_DB.Top == true or defaultValues_DB.Bottom == true ) then
 			if ( ProfileExists(defaultValues_DB.Profile) == false ) then
+				if ( defaultValues_DB.Profile == nil ) then
+					defaultValues_DB.Profile = "nil";
+				end
+				local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", defaultValues_DB.Profile);
 				defaultValues_DB.Profile = GetRaidProfileName(1);
 				if ( defaultValues_DB.ChatMessagesOn == true ) then
-					local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", defaultValues_DB.Profile);
 					print(ColorText(cachePrintSendSortOptionToSortBy:gsub("'replacement2'", defaultValues_DB.Profile), "option"));
 				end
 				UIDropDownMenu_SetText(Main_ddm_Profiles, defaultValues_DB.Profile);
@@ -750,82 +754,94 @@ end
 --DropDownMenu creating, include items
 --- End Creating
 
+local function SaveEntryExists(t)
+	if ( CountTable(t) > 0 ) then
+		local exists = true;
+		
+		if ( t.Top == nil ) then
+			t.Top = defaultValues_DB.Top;
+			exists = false;
+			Debug("SaveEntryExists", "Top = nil", 3);
+		end
+		if ( t.TopDescending == nil ) then
+			t.TopDescending = defaultValues_DB.TopDescending;
+			exists = false;
+			Debug("SaveEntryExists", "TopDescending = nil", 3);
+		end
+		if ( t.TopAscending == nil ) then
+			t.TopAscending = defaultValues_DB.TopAscending;
+			exists = false;
+			Debug("SaveEntryExists", "TopAscending = nil", 3);
+		end
+		if ( t.Bottom == nil ) then
+			t.Bottom = defaultValues_DB.Bottom;
+			exists = false;
+			Debug("SaveEntryExists", "Bottom = nil", 3);
+		end
+		if ( t.BottomDescending == nil ) then
+			t.BottomDescending = defaultValues_DB.BottomDescending;
+			exists = false;
+			Debug("SaveEntryExists", "BottomDescending = nil", 3);
+		end
+		if ( t.BottomAscending == nil ) then
+			t.BottomAscending = defaultValues_DB.BottomAscending;
+			exists = false;
+			Debug("SaveEntryExists", "BottomAscending = nil", 3);
+		end
+		if ( t.AutoActivate == nil ) then
+			t.AutoActivate = defaultValues_DB.AutoActivate;
+			exists = false;
+			Debug("SaveEntryExists", "AutoActivate = nil", 3);
+		end
+		if ( t.AlwaysActive == nil ) then
+			t.AlwaysActive = defaultValues_DB.AlwaysActive;
+			exists = false;
+			Debug("SaveEntryExists", "AlwaysActive = nil", 3);
+		end
+		if ( t.Profile == nil ) then
+			t.Profile = defaultValues_DB.Profile;
+			exists = false;
+			Debug("SaveEntryExists", "Profile = nil", 3);
+		end
+		if ( t.ChatMessagesOn == nil ) then
+			t.ChatMessagesOn = defaultValues_DB.ChatMessagesOn;
+			exists = false;
+			Debug("SaveEntryExists", "ChatMessagesOn = nil", 3);
+		end
+		if ( t.RaidProfileBlockInCombat == nil ) then
+			t.RaidProfileBlockInCombat = defaultValues_DB.RaidProfileBlockInCombat;
+			exists = false;
+			Debug("SaveEntryExists", "RaidProfileBlockInCombat = nil", 3);
+		end
+		if ( t.ShowGroupMembersInCombat == nil ) then
+			t.ShowGroupMembersInCombat = defaultValues_DB.ShowGroupMembersInCombat;
+			exists = false;
+			Debug("SaveEntryExists", "ShowGroupMembersInCombat = nil", 3);
+		end
+		
+		return exists;
+		end
+	
+	return false;
+end
+
 local function loadData()
-	if ( CountTable(SortGroupInformation) > 0 ) then
+	if ( SaveEntryExists(SortGroupDefaults) == true ) then
+		defaultValues_DB = SortGroupDefaults;
+		Debug("loadData", "new defaults", 3)
+	end
+	if ( SaveEntryExists(SortGroupInformation) == true ) then
 		if ( SortGroupInformation.NewDB ~= true or SortGroupInformation.NewDB == nil ) then
 			SortGroupInformation = nil;
 			SortGroupInformation = defaultValues_DB;
-			--print(ColorText(L["Sortgroup_reset_output"], "option"));
-			StaticPopupDialogs["SortGroup_reset_output_Dialog"] = {
-				text = ColorText(L["Sortgroup_reset_output"], "option"),
-				button1 = "Ok",
-				timeout = 0,
-				whileDead = true,
-				hideOnEscape = true,
-				preferredIndex = 3,
-			}
-			StaticPopup_Show("SortGroup_reset_output_Dialog");
+		else
+			defaultValues_DB = SortGroupInformation;
 		end
 		-- Version 4.x db check		
 	else
 		SortGroupInformation = nil;
 		SortGroupInformation = defaultValues_DB;
 		Debug("loadData", "new db", 3);
-	end
-	
-	if ( CountTable(SortGroupDefaults) == 13 ) then
-		defaultValues_DB = SortGroupDefaults;
-	else
-		if ( SortGroupInformation.Top == nil ) then
-			SortGroupInformation.Top = defaultValues_DB.Top;
-			Debug("loadData", "Top = nil", 3);
-		end
-		if ( SortGroupInformation.TopDescending == nil ) then
-			SortGroupInformation.TopDescending = defaultValues_DB.TopDescending;
-			Debug("loadData", "TopDescending = nil", 3);
-		end
-		if ( SortGroupInformation.TopAscending == nil ) then
-			SortGroupInformation.TopAscending = defaultValues_DB.TopAscending;
-			Debug("loadData", "TopAscending = nil", 3);
-		end
-		if ( SortGroupInformation.Bottom == nil ) then
-			SortGroupInformation.Bottom = defaultValues_DB.Bottom;
-			Debug("loadData", "Bottom = nil", 3);
-		end
-		if ( SortGroupInformation.BottomDescending == nil ) then
-			SortGroupInformation.BottomDescending = defaultValues_DB.BottomDescending;
-			Debug("loadData", "BottomDescending = nil", 3);
-		end
-		if ( SortGroupInformation.BottomAscending == nil ) then
-			SortGroupInformation.BottomAscending = defaultValues_DB.BottomAscending;
-			Debug("loadData", "BottomAscending = nil", 3);
-		end
-		if ( SortGroupInformation.AutoActivate == nil ) then
-			SortGroupInformation.AutoActivate = defaultValues_DB.AutoActivate;
-			Debug("loadData", "AutoActivate = nil", 3);
-		end
-		if ( SortGroupInformation.AlwaysActive == nil ) then
-			SortGroupInformation.AlwaysActive = defaultValues_DB.AlwaysActive;
-			Debug("loadData", "AlwaysActive = nil", 3);
-		end
-		if ( SortGroupInformation.Profile == nil ) then
-			SortGroupInformation.Profile = defaultValues_DB.Profile;
-			Debug("loadData", "Profile = nil", 3);
-		end
-		if ( SortGroupInformation.ChatMessagesOn == nil ) then
-			SortGroupInformation.ChatMessagesOn = defaultValues_DB.ChatMessagesOn;
-			Debug("loadData", "ChatMessagesOn = nil", 3);
-		end
-		if ( SortGroupInformation.RaidProfileBlockInCombat == nil ) then
-			SortGroupInformation.RaidProfileBlockInCombat = defaultValues_DB.RaidProfileBlockInCombat;
-			Debug("loadData", "RaidProfileBlockInCombat = nil", 3);
-		end
-		if ( SortGroupInformation.ShowGroupMembersInCombat == nil ) then
-			SortGroupInformation.ShowGroupMembersInCombat = defaultValues_DB.ShowGroupMembersInCombat;
-			Debug("loadData", "ShowGroupMembersInCombat = nil", 3);
-		end
-		
-		defaultValues_DB = SortGroupInformation;
 	end
 end
 
@@ -1278,8 +1294,40 @@ local function buttonEvent()
 	Option_btn_SetDefault:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
 	
 	Option_btn_Reset:SetScript("OnClick",
-		function()
-			--ReloadUI();
+		function()			
+			StaticPopupDialogs["Show_Dialog_Reset"] = {
+				text = L["SortGroup_Option_btn_Reset_Dialog"],
+				button1 = L["SortGroup_Option_btn_Reset_Dialog_Yes"],
+				button2 = L["SortGroup_Option_btn_Reset_Dialog_No"],
+				OnAccept = function()
+					Debug("Option_btn_Reset", "Yes", 3);
+					defaultValues_DB = {
+						Top = true,
+						TopDescending = true,
+						TopAscending = false,
+						Bottom = false,
+						BottomDescending = false,
+						BottomAscending = false,
+						AlwaysActive = false,
+						AutoActivate = true,
+						Profile = nil,
+						RaidProfileBlockInCombat = true,
+						ChatMessagesOn = true,
+						NewDB = true,
+						ShowGroupMembersInCombat = false
+					}
+					SortGroupInformation = nil;
+					SortGroupDefaults = nil;
+					SortGroupInformation = {};
+					SortGroupDefaults = {};
+					ReloadUI();
+				end,
+				timeout = 0,
+				whileDead = true,
+				hideOnEscape = true,
+				preferredIndex = 3,
+			}		
+			StaticPopup_Show ("Show_Dialog_Reset");
 	end);
 	Option_btn_Reset:SetScript("OnEnter", 
 		function(self)
