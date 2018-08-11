@@ -1,10 +1,10 @@
 v4.2
-	
+
 	Added a button to set new default values
 	Added a button to reset the addon
 	Adjusted buttons in option panel
 	Small code improvements
-
+	
 v4.1.2
 
 	Fixed the addon for 8.x

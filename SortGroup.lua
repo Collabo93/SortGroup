@@ -23,6 +23,22 @@ local defaultValues_DB = {
 	ShowGroupMembersInCombat = false
 }
 
+local savedValues_DB = {
+	Top = true,
+	TopDescending = true,
+	TopAscending = false,
+	Bottom = false,
+	BottomDescending = false,
+	BottomAscending = false,
+	AlwaysActive = false,
+	AutoActivate = true,
+	Profile = nil,
+	RaidProfileBlockInCombat = true,
+	ChatMessagesOn = true,
+	NewDB = true,
+	ShowGroupMembersInCombat = false
+}
+
 local changeableValues_DB = {
 	EscIntepretAsOK = false, 
 	--Personal recommendation to activate this. Pressing Cancel/Esc will be interpretet as OK - less taint and issues overall. However, someone might don't want this
@@ -33,7 +49,7 @@ local changeableValues_DB = {
 	CatchProfileSwitchEvent = false,
 	--Experimental. If activated, every manual switch will automatically activate the sort function - to apply it to the new profile. This will cause issues !
 	DebugModeActive = false,
-	DebugModeLevel = 1
+	DebugModeLevel = 2
 	-- debugging, false = deactivated
 	-- 1 Options
 	-- 2 Events+Method Names
@@ -79,9 +95,9 @@ local Option_cb_RaidProfilesUpdateInCombat = CreateFrame("CheckButton", "OptionC
 local Option_cb_ShowGroupMembersInCombat = CreateFrame("CheckButton", "OptionCbShowGroupMembersInCombat", Option_cb_RaidProfilesUpdateInCombat, "UICheckButtonTemplate");
 -- Combo-box Options
 
-local Option_btn_SetDefault = CreateFrame("Button", "OptionBtnSetDefault", Option_Text_Utility, "UIPanelButtonTemplate");
-local Option_btn_Reset = CreateFrame("Button", "OptionBtnReset", Option_Text_Utility, "UIPanelButtonTemplate");
-local Option_btn_Reload = CreateFrame("Button", "OptionBtnReload", Option_Text_Utility, "UIPanelButtonTemplate");
+local Option_btn_SetTemplate = CreateFrame("Button", "OptionBtnSetDefault", Option_Text_Utility, "UIPanelButtonTemplate");
+local Option_btn_LoadTemplate = CreateFrame("Button", "OptionBtnReset", Option_Text_Utility, "UIPanelButtonTemplate");
+local Option_btn_ResetTemplate = CreateFrame("Button", "OptionBtnReload", Option_Text_Utility, "UIPanelButtonTemplate");
 -- Button
 
 local Main_ddm_Profiles = CreateFrame("Button", "MainDdmProfiles", Main_cb_AutoActivate, "UIDropDownMenuTemplate");
@@ -123,17 +139,18 @@ local function Debug(methodName, methodContent, methodLevel)
 			if ( methodLevel == 1 ) then
 				debugMethodNamePrint = true;
 				print(ColorText("SortGroup: Debuging - Options", "option"));
-				print("'defaultValues_DB.Top' " .. tostring(defaultValues_DB.Top));
-				print("'defaultValues_DB.TopDescending' " .. tostring(defaultValues_DB.TopDescending));
-				print("'defaultValues_DB.TopAscending' " .. tostring(defaultValues_DB.TopAscending));
-				print("'defaultValues_DB.Bottom' " .. tostring(defaultValues_DB.Bottom));
-				print("'defaultValues_DB.BottomDescending' " .. tostring(defaultValues_DB.BottomDescending));
-				print("'defaultValues_DB.BottomAscending' " .. tostring(defaultValues_DB.BottomAscending));
-				print("'defaultValues_DB.Profile' " .. tostring(defaultValues_DB.Profile));
-				print("'AutoActivate' " .. tostring(defaultValues_DB.AutoActivate));
-				print("'defaultValues_DB.AlwaysActive' " .. tostring(defaultValues_DB.AlwaysActive));
-				print("'defaultValues_DB.ChatMessagesOn' " .. tostring(defaultValues_DB.ChatMessagesOn));
-				print("'defaultValues_DB.RaidProfileBlockInCombat' " .. tostring(defaultValues_DB.RaidProfileBlockInCombat));
+				print("'savedValues_DB.Top' " .. tostring(savedValues_DB.Top));
+				print("'savedValues_DB.TopDescending' " .. tostring(savedValues_DB.TopDescending));
+				print("'savedValues_DB.TopAscending' " .. tostring(savedValues_DB.TopAscending));
+				print("'savedValues_DB.Bottom' " .. tostring(savedValues_DB.Bottom));
+				print("'savedValues_DB.BottomDescending' " .. tostring(savedValues_DB.BottomDescending));
+				print("'savedValues_DB.BottomAscending' " .. tostring(savedValues_DB.BottomAscending));
+				print("'savedValues_DB.Profile' " .. tostring(savedValues_DB.Profile));
+				print("'savedValues_DB.AutoActivate' " .. tostring(savedValues_DB.AutoActivate));
+				print("'savedValues_DB.AlwaysActive' " .. tostring(savedValues_DB.AlwaysActive));
+				print("'savedValues_DB.ChatMessagesOn' " .. tostring(savedValues_DB.ChatMessagesOn));
+				print("'savedValues_DB.RaidProfileBlockInCombat' " .. tostring(savedValues_DB.RaidProfileBlockInCombat));
+				print("'savedValues_DB.ShowGroupMembersInCombat' " .. tostring(savedValues_DB.ShowGroupMembersInCombat));
 			end
 		end
 		if ( ( debugLevelCache == 2 or debugLevelCache == 6 ) and methodLevel >= 2 ) then
@@ -196,12 +213,12 @@ local function SwitchRaidProfiles()
 	if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 		member = tonumber(GetNumGroupMembers());
 		if ( HasLoadedCUFProfiles() == true ) then
-			if ( internValues_DB.inCombat == false and defaultValues_DB.Profile ~= nil ) then
-				if ( member <= 5 and ProfileExists(defaultValues_DB.Profile) ) then
-					if ( GetActiveRaidProfile() ~= defaultValues_DB.Profile ) then
-						ExecuteSwitchRaidProfiles(defaultValues_DB.Profile);
-						if ( defaultValues_DB.ChatMessagesOn == true ) then
-							print( ColorText(L["SortGroup_RaidProfil_changed_output"]:gsub("'replacement'", defaultValues_DB.Profile), "option") );
+			if ( internValues_DB.inCombat == false and savedValues_DB.Profile ~= nil ) then
+				if ( member <= 5 and ProfileExists(savedValues_DB.Profile) ) then
+					if ( GetActiveRaidProfile() ~= savedValues_DB.Profile ) then
+						ExecuteSwitchRaidProfiles(savedValues_DB.Profile);
+						if ( savedValues_DB.ChatMessagesOn == true ) then
+							print( ColorText(L["SortGroup_RaidProfil_changed_output"]:gsub("'replacement'", savedValues_DB.Profile), "option") );
 						end
 					end
 				end
@@ -273,7 +290,7 @@ end
 
 local function CheckProfileOptions()
 	Debug("CheckProfileOptions", "", 2);
-	if ( GetNumGroupMembers() <= 5 and GetActiveRaidProfile() == defaultValues_DB.Profile ) then
+	if ( GetNumGroupMembers() <= 5 and GetActiveRaidProfile() == savedValues_DB.Profile ) then
 		if ( CompactUnitFrameProfilesRaidStylePartyFrames:GetChecked() == false ) then
 			CompactUnitFrameProfilesRaidStylePartyFrames:Click("LeftButton",true);
 			Debug("CheckProfileOptions", "RaidStylePartyFrames clicked", 3);
@@ -281,7 +298,7 @@ local function CheckProfileOptions()
 		if ( CompactUnitFrameProfilesGeneralOptionsFrameKeepGroupsTogether:GetChecked() == true ) then
 			--CompactUnitFrameProfilesGeneralOptionsFrameKeepGroupsTogether:Click();
 			--taints if activated - need to make a work around
-			if ( defaultValues_DB.ChatMessagesOn == true and internValues_DB.showChatMessages == true ) then	
+			if ( savedValues_DB.ChatMessagesOn == true and internValues_DB.showChatMessages == true ) then	
 				print(ColorText(L["SortGroup_Keep_Group_Together_Active_output"], "option"));
 				internValues_DB.showChatMessages = false;
 			end
@@ -298,22 +315,22 @@ local function ChoseSort(SortOption, RaidProfileName, ExternSwitch)
 		SwitchRaidProfiles();
 	elseif ( internValues_DB.inCombat == false ) then
 		if ( RaidProfileName ~= nil and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() == true ) then
-			if ( GetActiveRaidProfile() ~= RaidProfileName and AutoActivate == false and defaultValues_DB.AlwaysActive == false ) then
+			if ( GetActiveRaidProfile() ~= RaidProfileName and AutoActivate == false and savedValues_DB.AlwaysActive == false ) then
 				if ( internValues_DB.showChatMessages == true ) then
-					if ( defaultValues_DB.ChatMessagesOn == true ) then
+					if ( savedValues_DB.ChatMessagesOn == true ) then
 						print(ColorText(L["SortGroup_RaidProfil_Doesnt_match_output_output"], "option"));
 					end
 				end
-			elseif ( GetActiveRaidProfile() == RaidProfileName or defaultValues_DB.AlwaysActive == true ) then
+			elseif ( GetActiveRaidProfile() == RaidProfileName or savedValues_DB.AlwaysActive == true ) then
 				if ( SortOption == 'Down') then
-					if ( defaultValues_DB.TopDescending == true ) then
+					if ( savedValues_DB.TopDescending == true ) then
 						if ( internValues_DB.showChatMessages == true ) then
-							if ( defaultValues_DB.AlwaysActive == true ) then
-								if ( defaultValues_DB.ChatMessagesOn == true ) then
+							if ( savedValues_DB.AlwaysActive == true ) then
+								if ( savedValues_DB.ChatMessagesOn == true ) then
 									print(ColorText(L["SortGroup_sort_top_descending_AlwaysActive_output"], "option"));
 								end
 							else
-								if ( defaultValues_DB.ChatMessagesOn == true ) then
+								if ( savedValues_DB.ChatMessagesOn == true ) then
 									print(ColorText(L["SortGroup_sort_top_descending_output"]:gsub("'replacement'", RaidProfileName), "option"));
 								end
 							end
@@ -321,14 +338,14 @@ local function ChoseSort(SortOption, RaidProfileName, ExternSwitch)
 						CheckProfileOptions();
 						SortTopDescending();
 					end
-					if ( defaultValues_DB.TopAscending == true ) then
+					if ( savedValues_DB.TopAscending == true ) then
 						if ( internValues_DB.showChatMessages == true ) then
-							if ( defaultValues_DB.AlwaysActive == true ) then
-								if ( defaultValues_DB.ChatMessagesOn == true ) then
+							if ( savedValues_DB.AlwaysActive == true ) then
+								if ( savedValues_DB.ChatMessagesOn == true ) then
 									print(ColorText(L["SortGroup_sort_top_ascending_AlwaysActive_output"], "option"));
 								end
 							else
-								if ( defaultValues_DB.ChatMessagesOn == true ) then
+								if ( savedValues_DB.ChatMessagesOn == true ) then
 									print(ColorText(L["SortGroup_sort_top_ascending_output"]:gsub("'replacement'", RaidProfileName), "option"));
 								end
 							end
@@ -337,14 +354,14 @@ local function ChoseSort(SortOption, RaidProfileName, ExternSwitch)
 						SortTopAscending();
 					end
 				elseif ( SortOption == 'Up') then
-					if ( defaultValues_DB.BottomDescending == true ) then
+					if ( savedValues_DB.BottomDescending == true ) then
 						if ( internValues_DB.showChatMessages == true ) then
-							if ( defaultValues_DB.AlwaysActive == true ) then
-								if ( defaultValues_DB.ChatMessagesOn == true ) then
+							if ( savedValues_DB.AlwaysActive == true ) then
+								if ( savedValues_DB.ChatMessagesOn == true ) then
 									print(ColorText(L["SortGroup_sort_bottom_descending_AlwaysActive_output"], "option"));
 								end
 							else
-								if ( defaultValues_DB.ChatMessagesOn == true ) then
+								if ( savedValues_DB.ChatMessagesOn == true ) then
 									print(ColorText(L["SortGroup_sort_bottom_descending_output"]:gsub("'replacement'", RaidProfileName), "option"));
 								end
 							end
@@ -352,14 +369,14 @@ local function ChoseSort(SortOption, RaidProfileName, ExternSwitch)
 						CheckProfileOptions();
 						SortBottomAscending();
 					end
-					if ( defaultValues_DB.BottomAscending == true ) then
+					if ( savedValues_DB.BottomAscending == true ) then
 						if ( internValues_DB.showChatMessages == true ) then
-							if ( defaultValues_DB.AlwaysActive == true ) then
-								if ( defaultValues_DB.ChatMessagesOn == true ) then
+							if ( savedValues_DB.AlwaysActive == true ) then
+								if ( savedValues_DB.ChatMessagesOn == true ) then
 									print(ColorText(L["SortGroup_sort_bottom_ascending_AlwaysActive_output"], "option"));
 								end
 							else
-								if ( defaultValues_DB.ChatMessagesOn == true ) then
+								if ( savedValues_DB.ChatMessagesOn == true ) then
 									print(ColorText(L["SortGroup_sort_bottom_ascending_output"]:gsub("'replacement'", RaidProfileName), "option"));
 								end
 							end
@@ -372,35 +389,35 @@ local function ChoseSort(SortOption, RaidProfileName, ExternSwitch)
 		end
 	end
 end
--- Final decision, which Raid defaultValues_DB.Profile gets loaded and which Sort Method will be used
+-- Final decision, which Raid savedValues_DB.Profile gets loaded and which Sort Method will be used
 
 local function SortInterstation(ExternSwitch)
 	Debug("SortInterstation", "", 2);
-	if ( defaultValues_DB.AlwaysActive == false ) then
-		if ( defaultValues_DB.Top == true or defaultValues_DB.Bottom == true ) then
-			if ( ProfileExists(defaultValues_DB.Profile) == false ) then
-				if ( defaultValues_DB.Profile == nil ) then
-					defaultValues_DB.Profile = "nil";
+	if ( savedValues_DB.AlwaysActive == false ) then
+		if ( savedValues_DB.Top == true or savedValues_DB.Bottom == true ) then
+			if ( ProfileExists(savedValues_DB.Profile) == false ) then
+				if ( savedValues_DB.Profile == nil ) then
+					savedValues_DB.Profile = "nil";
 				end
-				local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", defaultValues_DB.Profile);
-				defaultValues_DB.Profile = GetRaidProfileName(1);
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
-					print(ColorText(cachePrintSendSortOptionToSortBy:gsub("'replacement2'", defaultValues_DB.Profile), "option"));
+				local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", savedValues_DB.Profile);
+				savedValues_DB.Profile = GetRaidProfileName(1);
+				if ( savedValues_DB.ChatMessagesOn == true ) then
+					print(ColorText(cachePrintSendSortOptionToSortBy:gsub("'replacement2'", savedValues_DB.Profile), "option"));
 				end
-				UIDropDownMenu_SetText(Main_ddm_Profiles, defaultValues_DB.Profile);
+				UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
 			end
 		end
 	end
 	if ( ExternSwitch == true ) then
 		ChoseSort("","", true);
 	end
-	if ( defaultValues_DB.Top == true ) then
-		ChoseSort('Down', defaultValues_DB.Profile, false);
-	elseif ( defaultValues_DB.Bottom == true ) then
-		ChoseSort('Up', defaultValues_DB.Profile, false);
+	if ( savedValues_DB.Top == true ) then
+		ChoseSort('Down', savedValues_DB.Profile, false);
+	elseif ( savedValues_DB.Bottom == true ) then
+		ChoseSort('Up', savedValues_DB.Profile, false);
 	else
 		if ( internValues_DB.showChatMessages == true ) then
-			if ( defaultValues_DB.ChatMessagesOn == true ) then
+			if ( savedValues_DB.ChatMessagesOn == true ) then
 				print (ColorText(L["SortGroup_sort_no_output"], "option"));
 			end	
 		end
@@ -412,20 +429,20 @@ end
 local function UpdateComboBoxes()
 	Debug("UpdateComboBoxes", "", 2);
 	
-	if ( defaultValues_DB.AutoActivate == true ) then
+	if ( savedValues_DB.AutoActivate == true ) then
 		Main_cb_AutoActivate:SetChecked(true);
 		getglobal(Main_cb_AutoActivate:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_AutoActivate_Text"],"white"));
 	else
 		Main_cb_AutoActivate:SetChecked(false);
 	end
 	
-	if ( defaultValues_DB.AlwaysActive == true ) then
+	if ( savedValues_DB.AlwaysActive == true ) then
 		UIDropDownMenu_DisableDropDown(Main_ddm_Profiles);
 		Main_cb_AutoActivate:Disable();
 		getglobal(Main_cb_AutoActivate:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_AutoActivate_Text"],"disable"));
 		Main_cb_AlwaysActive:SetChecked(true);
 	else
-		defaultValues_DB.AlwaysActive = false;
+		savedValues_DB.AlwaysActive = false;
 		Main_cb_AutoActivate:Enable();
 		getglobal(Main_cb_AutoActivate:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_AutoActivate_Text"], "white"));
 		if ( Main_cb_AutoActivate:GetChecked() == true ) then
@@ -434,7 +451,7 @@ local function UpdateComboBoxes()
 		Main_cb_AlwaysActive:SetChecked(false);
 	end
 	
-	if ( defaultValues_DB.Top == true ) then
+	if ( savedValues_DB.Top == true ) then
 		Main_cb_Top:SetChecked(true);
 		Main_cb_Bottom:SetChecked(false);
 		Main_cb_TopDescending:Enable();
@@ -445,7 +462,7 @@ local function UpdateComboBoxes()
 		getglobal(Main_cb_TopAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"], "white"));
 		getglobal(Main_cb_BottomDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"],"disable"));
 		getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"],"disable"));
-	elseif ( defaultValues_DB.Bottom == true ) then
+	elseif ( savedValues_DB.Bottom == true ) then
 		Main_cb_Top:SetChecked(false);
 		Main_cb_Bottom:SetChecked(true);
 		Main_cb_TopDescending:Disable();
@@ -469,20 +486,20 @@ local function UpdateComboBoxes()
 		getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"],"disable"));
 	end
 	
-	if ( defaultValues_DB.TopDescending == true ) then
+	if ( savedValues_DB.TopDescending == true ) then
 		Main_cb_TopDescending:SetChecked(true);
 		Main_cb_TopAscending:SetChecked(false);
-	elseif ( defaultValues_DB.TopAscending == true ) then
+	elseif ( savedValues_DB.TopAscending == true ) then
 			Main_cb_TopDescending:SetChecked(false);
 			Main_cb_TopAscending:SetChecked(true);
 	else 	
 		Main_cb_TopDescending:SetChecked(false);
 		Main_cb_TopAscending:SetChecked(false);
 	end
-	if ( defaultValues_DB.BottomDescending == true ) then
+	if ( savedValues_DB.BottomDescending == true ) then
 		Main_cb_BottomDescending:SetChecked(true);
 		Main_cb_BottomAscending:SetChecked(false);
-	elseif ( defaultValues_DB.BottomAscending == true ) then
+	elseif ( savedValues_DB.BottomAscending == true ) then
 		Main_cb_BottomDescending:SetChecked(false);
 		Main_cb_BottomAscending:SetChecked(true);
 	else
@@ -490,12 +507,12 @@ local function UpdateComboBoxes()
 		Main_cb_BottomAscending:SetChecked(false);
 	end
 	
-	if ( defaultValues_DB.ChatMessagesOn == true ) then
+	if ( savedValues_DB.ChatMessagesOn == true ) then
 		Option_cb_ChatMessagesOn:SetChecked(true);
 	else 
 		Option_cb_ChatMessagesOn:SetChecked(false);
 	end
-	if ( defaultValues_DB.RaidProfileBlockInCombat == true ) then
+	if ( savedValues_DB.RaidProfileBlockInCombat == true ) then
 		Option_cb_RaidProfilesUpdateInCombat:SetChecked(true);
 		Option_cb_ShowGroupMembersInCombat:Enable();
 		getglobal(Option_cb_ShowGroupMembersInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"], "white"));
@@ -504,7 +521,7 @@ local function UpdateComboBoxes()
 		Option_cb_ShowGroupMembersInCombat:Disable();
 		getglobal(Option_cb_ShowGroupMembersInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"], "disable"));
 	end
-	if ( defaultValues_DB.ShowGroupMembersInCombat == true ) then
+	if ( savedValues_DB.ShowGroupMembersInCombat == true ) then
 		Option_cb_ShowGroupMembersInCombat:SetChecked(true);
 	else
 		Option_cb_ShowGroupMembersInCombat:SetChecked(false);
@@ -513,7 +530,7 @@ end
 -- Updating all displayed elements
 	
 local function resetRaidContainer()	
-	if ( defaultValues_DB.RaidProfileBlockInCombat == true ) then
+	if ( savedValues_DB.RaidProfileBlockInCombat == true ) then
 		Debug("resetRaidContainer", "", 2);
 		local old_CompactRaidFrameContainer_TryUpdate = CompactRaidFrameContainer_TryUpdate
 		CompactRaidFrameContainer_TryUpdate = function(self)	
@@ -551,7 +568,7 @@ local function ProfileChangedEvent()
 		old_CompactUnitFrameProfiles_ActivateRaidProfile = CompactUnitFrameProfiles_ActivateRaidProfile;
 		hooksecurefunc("CompactUnitFrameProfiles_ActivateRaidProfile", function(profile)
 			Debug("ProfileChanged", "", 2);
-			if ( (internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true) and defaultValues_DB.AlwaysActive == true) then
+			if ( (internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true) and savedValues_DB.AlwaysActive == true) then
 				SortInterstation(false);
 				Debug("ProfileChanged", "true", 3);
 			else
@@ -564,7 +581,11 @@ end
 
 local function SaveOptions()
 	Debug("SaveOptions", "", 2);
-	SortGroupInformation = defaultValues_DB;
+	--SortGroupInformation = savedValues_DB;
+	for key in pairs(savedValues_DB) do
+		SortGroupInformation[key] = savedValues_DB[key];
+		Debug("SaveOptions", key .. " " .. tostring(SortGroupInformation[key]), 3);
+	end
 end
 
 local function CountTable(t)
@@ -577,18 +598,18 @@ local function CountTable(t)
 end
 
 function SortGroup_Method_GetAutoActivate()
-	if ( defaultValues_DB.AlwaysActive == false ) then
-		return defaultValues_DB.AutoActivate;
+	if ( savedValues_DB.AlwaysActive == false ) then
+		return savedValues_DB.AutoActivate;
 	else
 		return false;
 	end
 end
 
 function SortGroup_Method_GetProfile()
-	if ( defaultValues_DB.Profile == nil ) then
+	if ( savedValues_DB.Profile == nil ) then
 		return SortGroupInformation.Profile;
 	end
-	return defaultValues_DB.Profile;
+	return savedValues_DB.Profile;
 end
 --Global functions to get informations to ProfileSwitcher - if active
 
@@ -653,8 +674,8 @@ local function createText()
 	
 	Option_Text_Utility:SetPoint("TOPLEFT", 350, -80);
 	Option_Text_Utility:SetFontObject(GameFontHighlightMedium);
-	Option_Text_Utility:SetText(L["SortGroup_Option_Text_Extra_Text"]);
-	Option_Text_Utility:SetSize(string.len(L["SortGroup_Option_Text_Extra_Text"]), 10);
+	Option_Text_Utility:SetText(L["SortGroup_Option_Text_Template_Text"]);
+	Option_Text_Utility:SetSize(string.len(L["SortGroup_Option_Text_Template_Text"]), 10);
 end
 
 local function createCheckbox()	
@@ -689,20 +710,20 @@ end
 local function createButton()
 	Debug("createButton", "", 2);
 	
-	Option_btn_SetDefault:SetSize(100, 20);
-	Option_btn_SetDefault:SetText(L["SortGroup_Option_btn_SetDefault_Text"]);
-	Option_btn_SetDefault:SetPoint("TOPLEFT", 15, -30)
+	Option_btn_SetTemplate:SetSize(100, 20);
+	Option_btn_SetTemplate:SetText(L["SortGroup_Option_btn_SetTemplate_Text"]);
+	Option_btn_SetTemplate:SetPoint("TOPLEFT", 15, -30)
 	
-	Option_btn_Reset:SetSize(100, 20);
-	Option_btn_Reset:SetText(L["SortGroup_Option_btn_Reset_Text"]);
-	Option_btn_Reset:SetPoint("TOPLEFT", 120, -30)
+	Option_btn_LoadTemplate:SetSize(100, 20);
+	Option_btn_LoadTemplate:SetText(L["SortGroup_Option_btn_LoadTemplate_Text"]);
+	Option_btn_LoadTemplate:SetPoint("TOPLEFT", 120, -30)
 	
-	Option_btn_Reload:SetSize(100, 20);
-	Option_btn_Reload:SetText(L["SortGroup_Option_btn_Reload_Text"]);
-	Option_btn_Reload:SetPoint("TOPLEFT", 15, -60)
+	Option_btn_ResetTemplate:SetSize(100, 20);
+	Option_btn_ResetTemplate:SetText(L["SortGroup_Option_btn_ResetTemplate_Text"]);
+	Option_btn_ResetTemplate:SetPoint("TOPLEFT", 15, -60)
 	
-	--local Option_btn_SetDefault = CreateFrame("Button", "OptionBtnSetDefault", Option_Frame, "UIPanelButtonTemplate");
---local Option_btn_Reset = CreateFrame("Button", "OptionBtnReset", Option_Frame, "UIPanelButtonTemplate");
+	--local Option_btn_SetTemplate = CreateFrame("Button", "OptionBtnSetDefault", Option_Frame, "UIPanelButtonTemplate");
+--local Option_btn_LoadTemplate = CreateFrame("Button", "OptionBtnReset", Option_Frame, "UIPanelButtonTemplate");
 end
 
 local function createDropDownMenu()
@@ -723,8 +744,8 @@ local function createDropDownMenu()
 						self.selectedID = item:GetID();
 						self.text:SetText(item);
 						self.value = i;
-						defaultValues_DB.Profile = value;
-						UIDropDownMenu_SetText(Main_ddm_Profiles, defaultValues_DB.Profile);
+						savedValues_DB.Profile = value;
+						UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
 						internValues_DB.showChatMessages = true;
 						SortInterstation(true);
 					else
@@ -733,12 +754,12 @@ local function createDropDownMenu()
 				end
 				self.info.checked = i == self.text:GetText();
 				UIDropDownMenu_AddButton(self.info, level);
-				if ( defaultValues_DB.Profile == self.info.text ) then
+				if ( savedValues_DB.Profile == self.info.text ) then
 					UIDropDownMenu_SetSelectedID(Main_ddm_Profiles, i);
 				end
 			end
 		else
-			if ( defaultValues_DB.ChatMessagesOn == true and SortGroup_Variable_Page3_ChatMessagesWarnings == true ) then
+			if ( savedValues_DB.ChatMessagesOn == true and SortGroup_Variable_Page3_ChatMessagesWarnings == true ) then
 				print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 			end
 		end
@@ -754,95 +775,27 @@ end
 --DropDownMenu creating, include items
 --- End Creating
 
-local function SaveEntryExists(t)
-	if ( CountTable(t) > 0 ) then
-		local exists = true;
-		
-		if ( t.Top == nil ) then
-			t.Top = defaultValues_DB.Top;
-			exists = false;
-			Debug("SaveEntryExists", "Top = nil", 3);
-		end
-		if ( t.TopDescending == nil ) then
-			t.TopDescending = defaultValues_DB.TopDescending;
-			exists = false;
-			Debug("SaveEntryExists", "TopDescending = nil", 3);
-		end
-		if ( t.TopAscending == nil ) then
-			t.TopAscending = defaultValues_DB.TopAscending;
-			exists = false;
-			Debug("SaveEntryExists", "TopAscending = nil", 3);
-		end
-		if ( t.Bottom == nil ) then
-			t.Bottom = defaultValues_DB.Bottom;
-			exists = false;
-			Debug("SaveEntryExists", "Bottom = nil", 3);
-		end
-		if ( t.BottomDescending == nil ) then
-			t.BottomDescending = defaultValues_DB.BottomDescending;
-			exists = false;
-			Debug("SaveEntryExists", "BottomDescending = nil", 3);
-		end
-		if ( t.BottomAscending == nil ) then
-			t.BottomAscending = defaultValues_DB.BottomAscending;
-			exists = false;
-			Debug("SaveEntryExists", "BottomAscending = nil", 3);
-		end
-		if ( t.AutoActivate == nil ) then
-			t.AutoActivate = defaultValues_DB.AutoActivate;
-			exists = false;
-			Debug("SaveEntryExists", "AutoActivate = nil", 3);
-		end
-		if ( t.AlwaysActive == nil ) then
-			t.AlwaysActive = defaultValues_DB.AlwaysActive;
-			exists = false;
-			Debug("SaveEntryExists", "AlwaysActive = nil", 3);
-		end
-		if ( t.Profile == nil ) then
-			t.Profile = defaultValues_DB.Profile;
-			exists = false;
-			Debug("SaveEntryExists", "Profile = nil", 3);
-		end
-		if ( t.ChatMessagesOn == nil ) then
-			t.ChatMessagesOn = defaultValues_DB.ChatMessagesOn;
-			exists = false;
-			Debug("SaveEntryExists", "ChatMessagesOn = nil", 3);
-		end
-		if ( t.RaidProfileBlockInCombat == nil ) then
-			t.RaidProfileBlockInCombat = defaultValues_DB.RaidProfileBlockInCombat;
-			exists = false;
-			Debug("SaveEntryExists", "RaidProfileBlockInCombat = nil", 3);
-		end
-		if ( t.ShowGroupMembersInCombat == nil ) then
-			t.ShowGroupMembersInCombat = defaultValues_DB.ShowGroupMembersInCombat;
-			exists = false;
-			Debug("SaveEntryExists", "ShowGroupMembersInCombat = nil", 3);
-		end
-		
-		return exists;
-		end
-	
-	return false;
-end
 
 local function loadData()
-	if ( SaveEntryExists(SortGroupDefaults) == true ) then
-		defaultValues_DB = SortGroupDefaults;
-		Debug("loadData", "new defaults", 3)
+	for key in pairs(SortGroupDefaults) do
+		savedValues_DB[key] = SortGroupDefaults[key];
+		Debug("loadData", key .. " load from defaults" .. tostring(savedValues_DB[key]), 3);
 	end
-	if ( SaveEntryExists(SortGroupInformation) == true ) then
-		if ( SortGroupInformation.NewDB ~= true or SortGroupInformation.NewDB == nil ) then
-			SortGroupInformation = nil;
-			SortGroupInformation = defaultValues_DB;
-		else
-			defaultValues_DB = SortGroupInformation;
-		end
-		-- Version 4.x db check		
-	else
+	
+	if ( SortGroupInformation.NewDB ~= true or SortGroupInformation.NewDB == nil ) then
 		SortGroupInformation = nil;
-		SortGroupInformation = defaultValues_DB;
-		Debug("loadData", "new db", 3);
+		SortGroupInformation = {};
+		for key in pairs(savedValues_DB) do
+			SortGroupInformation[key] = savedValues_DB[key];
+			Debug("loadData", key .. " load from saved " .. tostring(SortGroupInformation[key]), 3);
+		end
+	else
+		for key in pairs(SortGroupInformation) do
+			savedValues_DB[key] = SortGroupInformation[key];
+			Debug("loadData", key .. " load from saved " .. tostring(savedValues_DB[key]), 3);
+		end
 	end
+	-- Version 4.x db check		
 end
 
 local function frameEvent()
@@ -871,19 +824,19 @@ local function frameEvent()
 					UpdateTable[k] = nil
 					_G[v](_G[k])
 				end
-				if ( defaultValues_DB.AutoActivate == true or SortGroup_Variable_Page2_AdditionalSwitchActive == true ) then
+				if ( savedValues_DB.AutoActivate == true or SortGroup_Variable_Page2_AdditionalSwitchActive == true ) then
 					SortInterstation(true);
 				else
 					SortInterstation(false);
 				end
 			elseif ( event == "GROUP_ROSTER_UPDATE" ) then
 				Debug("GROUP_ROSTER_UPDATE", "", 2);
-				if ( defaultValues_DB.AutoActivate == true or SortGroup_Variable_Page2_AdditionalSwitchActive == true ) then
+				if ( savedValues_DB.AutoActivate == true or SortGroup_Variable_Page2_AdditionalSwitchActive == true ) then
 					SortInterstation(true);
 				else
 					SortInterstation(false);
 				end
-				if ( defaultValues_DB.ShowGroupMembersInCombat == true ) then
+				if ( savedValues_DB.ShowGroupMembersInCombat == true ) then
 					if ( internValues_DB.inCombat == true ) then
 						local cacheText = L["SortGroup_numberOfMembers_output"];
 						cacheText = cacheText:gsub("'replacement'", GetNumGroupMembers());
@@ -902,11 +855,11 @@ local function frameEvent()
 				end
 			elseif ( event == "COMPACT_UNIT_FRAME_PROFILES_LOADED" ) then
 				Debug("COMPACT_UNIT_FRAME_PROFILES_LOADED", "", 2)
-				defaultValues_DB.Profile = GetRaidProfileName(1);
+				savedValues_DB.Profile = GetRaidProfileName(1);
 				-- first time it's possibly to get the profile name - to set the default value
 
 				loadData();				
-				UIDropDownMenu_SetText(Main_ddm_Profiles, defaultValues_DB.Profile);
+				UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
 				UpdateComboBoxes();
 				--Get informations
 				
@@ -933,13 +886,13 @@ local function checkBoxEvent()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				internValues_DB.showChatMessages = true;
 				if ( Main_cb_Top:GetChecked() == true ) then
-					defaultValues_DB.Top = true;
-					defaultValues_DB.Bottom = false;
+					savedValues_DB.Top = true;
+					savedValues_DB.Bottom = false;
 					if ( Main_cb_TopDescending:GetChecked() == false and Main_cb_TopAscending:GetChecked() == false ) then
-						defaultValues_DB.TopDescending = true;
+						savedValues_DB.TopDescending = true;
 					end
 				elseif ( Main_cb_Top:GetChecked() == false ) then	
-					defaultValues_DB.Top = false;
+					savedValues_DB.Top = false;
 				end
 				SaveOptions();
 				UpdateComboBoxes();
@@ -947,7 +900,7 @@ local function checkBoxEvent()
 				Debug("checkBoxEvent", "", 1);
 			else
 				UpdateComboBoxes();
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -967,14 +920,14 @@ local function checkBoxEvent()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				internValues_DB.showChatMessages = true;
 				if ( Main_cb_Bottom:GetChecked() == true ) then
-					defaultValues_DB.Top = false;
-					defaultValues_DB.Bottom = true;
+					savedValues_DB.Top = false;
+					savedValues_DB.Bottom = true;
 					if ( Main_cb_BottomDescending:GetChecked() == false and Main_cb_BottomAscending:GetChecked() == false ) then
-						defaultValues_DB.BottomAscending = true;
+						savedValues_DB.BottomAscending = true;
 						Main_cb_BottomAscending:SetChecked(true);
 					end
 				elseif ( Main_cb_Bottom:GetChecked() == false ) then	
-					defaultValues_DB.Bottom = false;
+					savedValues_DB.Bottom = false;
 				end
 				SaveOptions();
 				UpdateComboBoxes();
@@ -982,7 +935,7 @@ local function checkBoxEvent()
 				Debug("checkBoxEvent", "", 1);
 			else
 				UpdateComboBoxes();
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -1002,10 +955,10 @@ local function checkBoxEvent()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				internValues_DB.showChatMessages = true;
 				if ( Main_cb_TopDescending:GetChecked() == true ) then
-					defaultValues_DB.TopDescending = true;
-					defaultValues_DB.TopAscending = false;
+					savedValues_DB.TopDescending = true;
+					savedValues_DB.TopAscending = false;
 				elseif ( Main_cb_TopDescending:GetChecked() == false ) then	
-					defaultValues_DB.TopDescending = false;
+					savedValues_DB.TopDescending = false;
 				end
 				SaveOptions();
 				UpdateComboBoxes();
@@ -1013,7 +966,7 @@ local function checkBoxEvent()
 				Debug("checkBoxEvent", "", 1);
 			else
 				UpdateComboBoxes();
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -1033,10 +986,10 @@ local function checkBoxEvent()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				internValues_DB.showChatMessages = true;
 				if ( Main_cb_TopAscending:GetChecked() == true ) then
-					defaultValues_DB.TopDescending = false;
-					defaultValues_DB.TopAscending = true;
+					savedValues_DB.TopDescending = false;
+					savedValues_DB.TopAscending = true;
 				elseif ( Main_cb_TopAscending:GetChecked() == false ) then	
-					defaultValues_DB.TopAscending = false;
+					savedValues_DB.TopAscending = false;
 				end
 				SaveOptions();
 				UpdateComboBoxes();
@@ -1044,7 +997,7 @@ local function checkBoxEvent()
 				Debug("checkBoxEvent", "", 1);
 			else
 				UpdateComboBoxes();
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -1064,10 +1017,10 @@ local function checkBoxEvent()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				internValues_DB.showChatMessages = true;
 				if ( Main_cb_BottomDescending:GetChecked() == true ) then
-					defaultValues_DB.BottomDescending = true;
-					defaultValues_DB.BottomAscending = false;
+					savedValues_DB.BottomDescending = true;
+					savedValues_DB.BottomAscending = false;
 				elseif ( Main_cb_BottomDescending:GetChecked() == false ) then	
-					defaultValues_DB.BottomDescending = false;
+					savedValues_DB.BottomDescending = false;
 				end
 				SaveOptions();
 				SortInterstation(false);
@@ -1075,7 +1028,7 @@ local function checkBoxEvent()
 				Debug("checkBoxEvent", "", 1);
 			else
 				UpdateComboBoxes();
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -1095,10 +1048,10 @@ local function checkBoxEvent()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				internValues_DB.showChatMessages = true;
 				if ( Main_cb_BottomAscending:GetChecked() == true ) then
-					defaultValues_DB.BottomDescending = false;
-					defaultValues_DB.BottomAscending = true;
+					savedValues_DB.BottomDescending = false;
+					savedValues_DB.BottomAscending = true;
 				elseif ( Main_cb_BottomAscending:GetChecked() == false ) then	
-					defaultValues_DB.BottomAscending = false;
+					savedValues_DB.BottomAscending = false;
 				end
 				SaveOptions();
 				SortInterstation(false);
@@ -1106,7 +1059,7 @@ local function checkBoxEvent()
 				Debug("checkBoxEvent", "", 1);
 			else
 				UpdateComboBoxes();
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -1126,14 +1079,14 @@ local function checkBoxEvent()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				internValues_DB.showChatMessages = true;
 				if ( Main_cb_AutoActivate:GetChecked() == true ) then
-					defaultValues_DB.AutoActivate = true;
-					if ( defaultValues_DB.AutoActivate == true or SortGroup_Variable_Page2_AdditionalSwitchActive == true ) then
+					savedValues_DB.AutoActivate = true;
+					if ( savedValues_DB.AutoActivate == true or SortGroup_Variable_Page2_AdditionalSwitchActive == true ) then
 						SortInterstation(true);
 					else
 						SortInterstation(false);
 					end
 				elseif ( Main_cb_AutoActivate:GetChecked() == false ) then
-					defaultValues_DB.AutoActivate = false;
+					savedValues_DB.AutoActivate = false;
 				end
 				SaveOptions();
 				SortInterstation(false);
@@ -1141,7 +1094,7 @@ local function checkBoxEvent()
 				UpdateComboBoxes();
 			else
 				UpdateComboBoxes();
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -1161,11 +1114,11 @@ local function checkBoxEvent()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				internValues_DB.showChatMessages = true;
 				if ( Main_cb_AlwaysActive:GetChecked() == true ) then
-					defaultValues_DB.AlwaysActive = true;
+					savedValues_DB.AlwaysActive = true;
 					UIDropDownMenu_DisableDropDown(Main_ddm_Profiles);
 					SortInterstation(false);
 				elseif ( Main_cb_AlwaysActive:GetChecked() == false ) then
-					defaultValues_DB.AlwaysActive = false;
+					savedValues_DB.AlwaysActive = false;
 					Main_cb_AutoActivate:Enable();
 					UIDropDownMenu_EnableDropDown(Main_ddm_Profiles);
 					getglobal(Main_cb_AutoActivate:GetName() .. 'Text'):SetText(L["SortGroup_Main_cb_AutoActivate_Text"]);
@@ -1176,7 +1129,7 @@ local function checkBoxEvent()
 				Debug("checkBoxEvent", "", 1);
 			else
 				UpdateComboBoxes();
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -1188,7 +1141,7 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_AlwaysActive:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-	--Combobox defaultValues_DB.AlwaysActive
+	--Combobox savedValues_DB.AlwaysActive
 			
 	
 	Option_cb_ChatMessagesOn:SetScript("OnClick",
@@ -1196,17 +1149,17 @@ local function checkBoxEvent()
 			Debug("Option_cb_ChatMessagesOn", "", 2);
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				if ( Option_cb_ChatMessagesOn:GetChecked() == true ) then
-					defaultValues_DB.ChatMessagesOn = true;
+					savedValues_DB.ChatMessagesOn = true;
 					print(ColorText(L["SortGroup_sort_chat_Messages_On_output"], "option"));
 				elseif ( Option_cb_ChatMessagesOn:GetChecked() == false ) then
-					defaultValues_DB.ChatMessagesOn = false;
+					savedValues_DB.ChatMessagesOn = false;
 				end
 				SaveOptions();
 				Debug("checkBoxEvent", "", 1);
 				UpdateComboBoxes();
 			else
 				UpdateComboBoxes(true);
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -1218,23 +1171,23 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Option_cb_ChatMessagesOn:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-	--Combobox defaultValues_DB.ChatMessagesOn
+	--Combobox savedValues_DB.ChatMessagesOn
 	
 	Option_cb_RaidProfilesUpdateInCombat:SetScript("OnClick",
 		function()
 			Debug("Option_cb_RaidProfilesUpdateInCombat", "", 2);
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				if ( Option_cb_RaidProfilesUpdateInCombat:GetChecked() == true ) then
-					defaultValues_DB.RaidProfileBlockInCombat = true;
+					savedValues_DB.RaidProfileBlockInCombat = true;
 				elseif ( Option_cb_RaidProfilesUpdateInCombat:GetChecked() == false ) then
-					defaultValues_DB.RaidProfileBlockInCombat = false;
+					savedValues_DB.RaidProfileBlockInCombat = false;
 				end
 				SaveOptions();
 				Debug("Option_cb_RaidProfilesUpdateInCombat", "", 1);
 				UpdateComboBoxes();
 			else
 				UpdateComboBoxes();
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -1246,23 +1199,23 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Option_cb_RaidProfilesUpdateInCombat:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-	--Combobox defaultValues_DB.RaidProfileBlockInCombat
+	--Combobox savedValues_DB.RaidProfileBlockInCombat
 	
 	Option_cb_ShowGroupMembersInCombat:SetScript("OnClick",
 		function()
 			Debug("Option_cb_ShowGroupMembersInCombat", "", 2);
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 				if ( Option_cb_ShowGroupMembersInCombat:GetChecked() == true ) then
-					defaultValues_DB.ShowGroupMembersInCombat = true;
+					savedValues_DB.ShowGroupMembersInCombat = true;
 				elseif ( Option_cb_ShowGroupMembersInCombat:GetChecked() == false ) then
-					defaultValues_DB.ShowGroupMembersInCombat = false;
+					savedValues_DB.ShowGroupMembersInCombat = false;
 				end
 				SaveOptions();
 				Debug("Option_cb_ShowGroupMembersInCombat", "", 1);
 				UpdateComboBoxes();
 			else
 				UpdateComboBoxes();
-				if ( defaultValues_DB.ChatMessagesOn == true ) then
+				if ( savedValues_DB.ChatMessagesOn == true ) then
 					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
 				end
 			end
@@ -1281,65 +1234,63 @@ end
 local function buttonEvent()
 	Debug("buttonEvent", "", 2);
 	
-	Option_btn_SetDefault:SetScript("OnClick",
-		function()
-			SortGroupDefaults = defaultValues_DB;
+	Option_btn_SetTemplate:SetScript("OnClick",
+		function()		
+			for key in pairs(savedValues_DB) do
+				SortGroupDefaults[key] = savedValues_DB[key];
+				defaultValues_DB[key] = savedValues_DB[key];
+				Debug("buttonEvent", key .. " " .. tostring(SortGroupDefaults[key]), 3);
+			end
+			Debug("Option_btn_SetTemplate", "", 1);
 	end);
-	Option_btn_SetDefault:SetScript("OnEnter", 
+	Option_btn_SetTemplate:SetScript("OnEnter", 
 		function(self)
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-			GameTooltip:AddLine(L["SortGroup_Option_btn_SetDefault_Text"] .."\n\n" .. ColorText(L["SortGroup_Option_btn_SetDefault_ToolTip"], "white") , nil, nil, nil, 1);
+			GameTooltip:AddLine(L["SortGroup_Option_btn_SetTemplate_Text"] .."\n\n" .. ColorText(L["SortGroup_Option_btn_SetTemplate_ToolTip"], "white") , nil, nil, nil, 1);
 			GameTooltip:Show();
 		end);
-	Option_btn_SetDefault:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
+	Option_btn_SetTemplate:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
 	
-	Option_btn_Reset:SetScript("OnClick",
-		function()			
-			StaticPopupDialogs["Show_Dialog_Reset"] = {
-				text = L["SortGroup_Option_btn_Reset_Dialog"],
-				button1 = L["SortGroup_Option_btn_Reset_Dialog_Yes"],
-				button2 = L["SortGroup_Option_btn_Reset_Dialog_No"],
-				OnAccept = function()
-					Debug("Option_btn_Reset", "Yes", 3);
-					defaultValues_DB = {
-						Top = true,
-						TopDescending = true,
-						TopAscending = false,
-						Bottom = false,
-						BottomDescending = false,
-						BottomAscending = false,
-						AlwaysActive = false,
-						AutoActivate = true,
-						Profile = nil,
-						RaidProfileBlockInCombat = true,
-						ChatMessagesOn = true,
-						NewDB = true,
-						ShowGroupMembersInCombat = false
-					}
-					SortGroupInformation = nil;
-					SortGroupDefaults = nil;
-					SortGroupInformation = {};
-					SortGroupDefaults = {};
-					ReloadUI();
-				end,
-				timeout = 0,
-				whileDead = true,
-				hideOnEscape = true,
-				preferredIndex = 3,
-			}		
-			StaticPopup_Show ("Show_Dialog_Reset");
+	Option_btn_LoadTemplate:SetScript("OnClick",
+		function()		
+			for key in pairs(SortGroupDefaults) do
+				savedValues_DB[key] = SortGroupDefaults[key];
+				defaultValues_DB[key] = SortGroupDefaults[key];
+				Debug("buttonEvent", key .. " " .. tostring(savedValues_DB[key]), 3);
+			end
+			UpdateComboBoxes();
+			Debug("Option_btn_LoadTemplate", "", 1);
 	end);
-	Option_btn_Reset:SetScript("OnEnter", 
+	Option_btn_LoadTemplate:SetScript("OnEnter", 
 		function(self)
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-			GameTooltip:AddLine(L["SortGroup_Option_btn_Reset_Text"] .."\n\n" .. ColorText(L["SortGroup_Option_btn_Reset_ToolTip"], "white") , nil, nil, nil, 1);
+			GameTooltip:AddLine(L["SortGroup_Option_btn_LoadTemplate_Text"] .."\n\n" .. ColorText(L["SortGroup_Option_btn_Reset_ToolTip"], "white") , nil, nil, nil, 1);
 			GameTooltip:Show();
 		end);
-	Option_btn_Reset:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
+	Option_btn_LoadTemplate:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
 	
-	Option_btn_Reload:SetScript("OnClick",
+	Option_btn_ResetTemplate:SetScript("OnClick",
 		function()
-			ReloadUI();
+			SortGroupDefaults = nil;
+			SortGroupDefaults = {};
+			defaultValues_DB = {
+				Top = true,
+				TopDescending = true,
+				TopAscending = false,
+				Bottom = false,
+				BottomDescending = false,
+				BottomAscending = false,
+				AlwaysActive = false,
+				AutoActivate = true,
+				Profile = nil,
+				RaidProfileBlockInCombat = true,
+				ChatMessagesOn = true,
+				NewDB = true,
+				ShowGroupMembersInCombat = false
+			}
+			savedValues_DB = defaultValues_DB;
+			UpdateComboBoxes();
+			Debug("Option_btn_ResetTemplate", "", 1);
 	end);
 end
 ---End Events
