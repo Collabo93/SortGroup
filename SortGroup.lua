@@ -7,6 +7,8 @@ local Main_Frame = CreateFrame("Frame", "MainPanel", InterfaceOptionsFramePanelC
 local Option_Frame = CreateFrame("Frame", "OptionPanel", Main_Frame);
 -- Main Frame
 
+local intern_version = "4.3 Alpha";
+
 local defaultValues_DB = {
 	Top = true,
 	TopDescending = true,
@@ -20,7 +22,8 @@ local defaultValues_DB = {
 	RaidProfileBlockInCombat = true,
 	ChatMessagesOn = true,
 	NewDB = true,
-	ShowGroupMembersInCombat = false
+	ShowGroupMembersInCombat = false,
+	version = intern_version
 }
 
 local savedValues_DB = {
@@ -36,7 +39,8 @@ local savedValues_DB = {
 	RaidProfileBlockInCombat = true,
 	ChatMessagesOn = true,
 	NewDB = true,
-	ShowGroupMembersInCombat = false
+	ShowGroupMembersInCombat = false,
+	version = intern_version
 }
 
 local changeableValues_DB = {
@@ -71,7 +75,6 @@ local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "Ga
 
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame); 
-local intern_version = "4.2";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version
 local intern_author = "Collabo93"
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author
@@ -211,7 +214,7 @@ end
 local function SwitchRaidProfiles()
 	Debug("SwitchRaidProfiles", "", 2);
 	if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
-		member = tonumber(GetNumGroupMembers());
+		local member = tonumber(GetNumGroupMembers());
 		if ( HasLoadedCUFProfiles() == true ) then
 			if ( internValues_DB.inCombat == false and savedValues_DB.Profile ~= nil ) then
 				if ( member <= 5 and ProfileExists(savedValues_DB.Profile) ) then
@@ -581,7 +584,6 @@ end
 
 local function SaveOptions()
 	Debug("SaveOptions", "", 2);
-	--SortGroupInformation = savedValues_DB;
 	for key in pairs(savedValues_DB) do
 		SortGroupInformation[key] = savedValues_DB[key];
 		Debug("SaveOptions", key .. " " .. tostring(SortGroupInformation[key]), 3);
@@ -721,9 +723,6 @@ local function createButton()
 	Option_btn_ResetTemplate:SetSize(100, 20);
 	Option_btn_ResetTemplate:SetText(L["SortGroup_Option_btn_ResetTemplate_Text"]);
 	Option_btn_ResetTemplate:SetPoint("TOPLEFT", 15, -60)
-	
-	--local Option_btn_SetTemplate = CreateFrame("Button", "OptionBtnSetDefault", Option_Frame, "UIPanelButtonTemplate");
---local Option_btn_LoadTemplate = CreateFrame("Button", "OptionBtnReset", Option_Frame, "UIPanelButtonTemplate");
 end
 
 local function createDropDownMenu()
@@ -848,7 +847,6 @@ local function frameEvent()
 							cacheText = cacheText:gsub("'replacement2'", (GetNumGroupMembers() - internValues_DB.GroupMembersOoC) );
 						end
 						print(ColorText(cacheText, "option"));
-						--print("Actuall members: "..GetNumGroupMembers().." , displayed members: ".. (GetNumGroupMembers() - internValues_DB.GroupMembersOoC) );
 					else
 						internValues_DB.GroupMembersOoC = 0;
 					end
@@ -1286,7 +1284,8 @@ local function buttonEvent()
 				RaidProfileBlockInCombat = true,
 				ChatMessagesOn = true,
 				NewDB = true,
-				ShowGroupMembersInCombat = false
+				ShowGroupMembersInCombat = false,
+				version = intern_version
 			}
 			savedValues_DB = defaultValues_DB;
 			UpdateComboBoxes();

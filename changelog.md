@@ -1,3 +1,12 @@
+4.3 Alpha
+	
+	*Planed*
+	Check the combat block function
+	Add new sort functions
+	Add multiple raid options
+	Check table via version number
+	Maybe some fixes for 8.1 needed
+
 v4.2
 
 	Added a button to set new default values
