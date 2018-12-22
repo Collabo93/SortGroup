@@ -8,6 +8,7 @@ local Option_Frame = CreateFrame("Frame", "OptionPanel", Main_Frame);
 -- Main Frame
 
 local intern_version = "4.3 Alpha";
+local cacheSort;
 
 local defaultValues_DB = {
 	Top = true,
@@ -233,14 +234,13 @@ end
 
 local function SortTopDescending()
 	Debug("SortTopDescending", "", 2);
-	LoadAddOn("CompactRaidFrameContainer");
-	local CRFSort_TopDownwards = function(t1, t2)
+	local CRFSort_TopDownwards = cacheSort;
+	print(tostring(CRFSort_TopDownwards))
+	CRFSort_TopDownwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
 			return true;
 		elseif UnitIsUnit(t2, "player") then 
 			return false;
-		else 
-			return t1 < t2;
 		end 
 	end
 	CompactRaidFrameContainer_SetFlowSortFunction(CompactRaidFrameContainer, CRFSort_TopDownwards)
@@ -248,14 +248,12 @@ end
 
 local function SortTopAscending()
 	Debug("SortTopAscending", "", 2);
-	LoadAddOn("CompactRaidFrameContainer");
-	local CRFSort_TopUpwards = function(t1, t2)
+	local CRFSort_TopUpwards = cacheSort;
+	CRFSort_TopUpwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
 			return true;
 		elseif UnitIsUnit(t2, "player") then 
 			return false;
-		else 
-			return t1 > t2;
 		end 
 	end
 	CompactRaidFrameContainer_SetFlowSortFunction(CompactRaidFrameContainer, CRFSort_TopUpwards)
@@ -263,14 +261,12 @@ end
 	
 local function SortBottomDescending()
 	Debug("SortBottomDescending", "", 2);
-	LoadAddOn("CompactRaidFrameContainer");
-	local CRFSort_BottomUpwards = function(t1, t2)
+	local CRFSort_BottomUpwards = cacheSort;
+	CRFSort_BottomUpwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
 			return false;
 		elseif UnitIsUnit(t2, "player") then 
 			return true; 
-		else 
-			return t1 > t2;
 		end 
 	end
 	CompactRaidFrameContainer_SetFlowSortFunction(CompactRaidFrameContainer, CRFSort_BottomUpwards)
@@ -278,14 +274,12 @@ end
 
 local function SortBottomAscending()
 	Debug("SortBottomAscending", "", 2);
-	LoadAddOn("CompactRaidFrameContainer");
-	local CRFSort_BottomDownwards = function(t1, t2)
+	local CRFSort_BottomDownwards = cacheSort;
+	CRFSort_BottomDownwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
 			return false;
 		elseif UnitIsUnit(t2, "player") then 
 			return true; 
-		else 
-			return t1 < t2;
 		end 
 	end
 	CompactRaidFrameContainer_SetFlowSortFunction(CompactRaidFrameContainer, CRFSort_BottomDownwards)
@@ -864,6 +858,8 @@ local function frameEvent()
 				resetRaidContainer();
 				ProfileChangedEvent();
 				-- Both are only activatable by changeableValues_DB
+				
+				cacheSort = CompactRaidFrameContainer.flowSortFunc;
 				
 				internValues_DB.showChatMessages = true;
 				SortInterstation(true);
