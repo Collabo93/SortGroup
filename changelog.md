@@ -1,12 +1,15 @@
 4.3 Alpha
 
-	Experiments with further sort options
-	*Planed*
-	Check the combat block function
-	Add new sort functions
-	Add multiple raid options
-	Check table via version number
-	Maybe some fixes for 8.1 needed
+	Removed Templates
+	Removed Debug
+	Removed redundant code
+	Code optimizations
+	Vehicle interaction should be protected now
+	Members leaving the party, while player is combat, are now faded out by default.
+	CVar Check/Set for KeepGroupTogether
+	Small bug fixes
+	AceAddon lib update
+	Flagged for 9.1.5
 
 v4.2
 
@@ -19,7 +22,7 @@ v4.1.2
 
 	Fixed the addon for 8.x
 	Fixed an issue which potentially could cause lua errors
-	Fixed a misspelling in german language
+	Fixed a misspelling in the german language
 	Added a checkbox to display actual group members in chat, if the raid frames are blocked - by default disabled
 
 v4.1

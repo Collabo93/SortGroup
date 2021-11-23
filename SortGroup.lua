@@ -108,22 +108,17 @@ local function ProfileExists(raidProfile)
 end
 --Fills internValues_DB.ddmItems with raidprofiles and checks if raidprofil exists
 
+local function SetDefaultProfile()
+	local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", savedValues_DB.Profile);
+	savedValues_DB.Profile = GetRaidProfileName(1);
+	if ( savedValues_DB.ChatMessagesOn == true ) then
+		print(ColorText(cachePrintSendSortOptionToSortBy:gsub("'replacement2'", savedValues_DB.Profile), "option"));
+	end
+	UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
+end
+--Set the first Profile to default
+
 local function ActivateRaidProfile(profile)
---[[
-	CompactUnitFrameProfiles.selectedProfile = profile;
-	SaveRaidProfileCopy(profile);
-	--SetCVar("activeCUFProfile", profile);
-	SetActiveRaidProfile(profile);
-	
-	UIDropDownMenu_SetSelectedValue(CompactUnitFrameProfilesProfileSelector, profile);
-	UIDropDownMenu_SetText(CompactUnitFrameProfilesProfileSelector, profile);	
-	UIDropDownMenu_SetSelectedValue(CompactRaidFrameManagerDisplayFrameProfileSelector, profile);
-	UIDropDownMenu_SetText(CompactRaidFrameManagerDisplayFrameProfileSelector, profile);		
-	
-	CompactUnitFrameProfiles_HidePopups();
-	CompactUnitFrameProfiles_UpdateCurrentPanel();
-	CompactUnitFrameProfiles_ApplyCurrentSettings();	
---]]
 	CompactUnitFrameProfiles_ActivateRaidProfile(profile);
 end
 
@@ -146,8 +141,6 @@ end
 
 
 local function SortTopDescending()
-	--LoadAddOn("CompactRaidFrameContainer");
-	--print(manager.container:GetName());
 	local CRFSort_TopDownwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
 			return true;
@@ -161,7 +154,6 @@ local function SortTopDescending()
 end
 
 local function SortTopAscending()
-	--LoadAddOn("CompactRaidFrameContainer");
 	local CRFSort_TopUpwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
 			return true;
@@ -173,27 +165,8 @@ local function SortTopAscending()
 	end
 	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_TopUpwards)
 end
-	
---[[	Final?
-local function SortMiddleDescending()
-	LoadAddOn("Blizzard_CompactRaidFrames") 
-	local CRFSort_Group=function(to, compare) 
-		if UnitIsUnit(compare, "player") then 
-			if compare == "party1" and to == "party2" then 
-				return true 
-			end 
-		elseif UnitIsUnit(to, "player") then 
-			if to == "party3" and compare == "party2" then 
-				return true 
-			end 
-		end
-	end
-	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_Group)
-end
---]]
 
 local function SortBottomDescending()
-	--LoadAddOn("CompactRaidFrameContainer");
 	local CRFSort_BottomUpwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
 			return false;
@@ -207,7 +180,6 @@ local function SortBottomDescending()
 end
 
 local function SortBottomAscending()
-	--LoadAddOn("CompactRaidFrameContainer");
 	local CRFSort_BottomDownwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
 			return false;
@@ -221,36 +193,43 @@ local function SortBottomAscending()
 end
 
 local function CheckProfileOptions()
-	if ( GetNumGroupMembers() <= 5 and GetActiveRaidProfile() == savedValues_DB.Profile ) then
-		if ( CompactUnitFrameProfilesRaidStylePartyFrames:GetChecked() == false ) then
-			CompactUnitFrameProfilesRaidStylePartyFrames:Click("LeftButton",true);
-		end
-		if ( CompactUnitFrameProfilesGeneralOptionsFrameKeepGroupsTogether:GetChecked() == true ) then
-			--CompactUnitFrameProfilesGeneralOptionsFrameKeepGroupsTogether:Click();
-			--taints if activated - need to make a work around
-			if ( savedValues_DB.ChatMessagesOn == true and internValues_DB.showChatMessages == true ) then	
-				print(ColorText(L["SortGroup_Keep_Group_Together_Active_output"], "option"));
-				internValues_DB.showChatMessages = false;
-			end
+	--Check if KeepGroupsTogether is checked -> needs to be disabled
+	if ( CompactRaidFrameManager_GetSetting("KeepGroupsTogether") ) then
+		CompactRaidFrameManager_SetSetting("KeepGroupsTogether", "0")
+		if ( savedValues_DB.ChatMessagesOn == true and internValues_DB.showChatMessages == true ) then	
+			print(ColorText(L["SortGroup_Keep_Group_Together_Active_output"], "option"));
+			internValues_DB.showChatMessages = false;
 		end
 	end
 end
 --necessary changes to apply sort options
 --CompactUnitFrameProfilesGeneralOptionsFrameKeepGroupsTogether taints, so User needs to do this
 
-local function ChoseSort(SortOption, RaidProfileName, ExternSwitch)	
-	if ( ExternSwitch == true ) then 
-		SwitchRaidProfiles();
-	elseif ( internValues_DB.inCombat == false ) then
-		if ( RaidProfileName ~= nil and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() == true ) then
-			if ( GetActiveRaidProfile() ~= RaidProfileName and savedValues_DB.AutoActivate == false and savedValues_DB.AlwaysActive == false ) then
+local function ApplySort()	
+	--if always active is off and the saved profile doesnt exist, load a new profile as default
+	if ( savedValues_DB.AlwaysActive == false ) then
+		if ( not ProfileExists(savedValues_DB.Profile) ) then
+			SetDefaultProfile();
+		end
+	end
+
+	--combat status check
+	if ( internValues_DB.inCombat == false ) then
+
+		--Group status check
+		if ( IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() ) then
+			
+			--Check if current Profile matches with saved Profile, and AlwaysActive is off
+			if ( GetActiveRaidProfile() ~= savedValues_DB.Profile and savedValues_DB.AlwaysActive == false ) then
 				if ( internValues_DB.showChatMessages == true ) then
 					if ( savedValues_DB.ChatMessagesOn == true ) then
-						print(ColorText(L["SortGroup_RaidProfil_Doesnt_match_output_output"], "option"));
+						print(ColorText(L["SortGroup_RaidProfil_Doesnt_match_output"], "option"));
 					end
 				end
-			elseif ( GetActiveRaidProfile() == RaidProfileName or savedValues_DB.AlwaysActive == true ) then
-				if ( SortOption == 'Down') then
+				
+			--Everything is fine, sorting can get applied
+			else
+				if ( savedValues_DB.Top ) then
 					if ( savedValues_DB.TopDescending == true ) then
 						if ( internValues_DB.showChatMessages == true ) then
 							if ( savedValues_DB.AlwaysActive == true ) then
@@ -259,7 +238,7 @@ local function ChoseSort(SortOption, RaidProfileName, ExternSwitch)
 								end
 							else
 								if ( savedValues_DB.ChatMessagesOn == true ) then
-									print(ColorText(L["SortGroup_sort_top_descending_output"]:gsub("'replacement'", RaidProfileName), "option"));
+									print(ColorText(L["SortGroup_sort_top_descending_output"]:gsub("'replacement'", savedValues_DB.Profile), "option"));
 								end
 							end
 						end
@@ -274,14 +253,14 @@ local function ChoseSort(SortOption, RaidProfileName, ExternSwitch)
 								end
 							else
 								if ( savedValues_DB.ChatMessagesOn == true ) then
-									print(ColorText(L["SortGroup_sort_top_ascending_output"]:gsub("'replacement'", RaidProfileName), "option"));
+									print(ColorText(L["SortGroup_sort_top_ascending_output"]:gsub("'replacement'", savedValues_DB.Profile), "option"));
 								end
 							end
 						end
 						CheckProfileOptions();
 						SortTopAscending();
 					end
-				elseif ( SortOption == 'Up') then
+				elseif(savedValues_DB.Bottom) then 
 					if ( savedValues_DB.BottomDescending == true ) then
 						if ( internValues_DB.showChatMessages == true ) then
 							if ( savedValues_DB.AlwaysActive == true ) then
@@ -290,7 +269,7 @@ local function ChoseSort(SortOption, RaidProfileName, ExternSwitch)
 								end
 							else
 								if ( savedValues_DB.ChatMessagesOn == true ) then
-									print(ColorText(L["SortGroup_sort_bottom_descending_output"]:gsub("'replacement'", RaidProfileName), "option"));
+									print(ColorText(L["SortGroup_sort_bottom_descending_output"]:gsub("'replacement'", savedValues_DB.Profile), "option"));
 								end
 							end
 						end
@@ -305,53 +284,29 @@ local function ChoseSort(SortOption, RaidProfileName, ExternSwitch)
 								end
 							else
 								if ( savedValues_DB.ChatMessagesOn == true ) then
-									print(ColorText(L["SortGroup_sort_bottom_ascending_output"]:gsub("'replacement'", RaidProfileName), "option"));
+									print(ColorText(L["SortGroup_sort_bottom_ascending_output"]:gsub("'replacement'", savedValues_DB.Profile), "option"));
 								end
 							end
 						end
 						CheckProfileOptions();
 						SortBottomDescending();
 					end
+					
+				--No sorting option checked
+				else
+					if ( internValues_DB.showChatMessages == true ) then
+						if ( savedValues_DB.ChatMessagesOn == true ) then
+							print (ColorText(L["SortGroup_sort_no_output"], "option"));
+						end	
+					end
 				end
 			end	
 		end
 	end
-end
--- Final decision, which Raid savedValues_DB.Profile gets loaded and which Sort Method will be used
-
-local function SortDecision(ExternSwitch)
-	if ( savedValues_DB.AlwaysActive == false ) then
-		if ( savedValues_DB.Top == true or savedValues_DB.Bottom == true ) then
-			if ( ProfileExists(savedValues_DB.Profile) == false ) then
-				if ( savedValues_DB.Profile == nil ) then
-					savedValues_DB.Profile = "nil";
-				end
-				local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", savedValues_DB.Profile);
-				savedValues_DB.Profile = GetRaidProfileName(1);
-				if ( savedValues_DB.ChatMessagesOn == true ) then
-					print(ColorText(cachePrintSendSortOptionToSortBy:gsub("'replacement2'", savedValues_DB.Profile), "option"));
-				end
-				UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
-			end
-		end
-	end
-	if ( ExternSwitch == true ) then
-		ChoseSort("","", true);
-	end
-	if ( savedValues_DB.Top == true ) then
-		ChoseSort('Down', savedValues_DB.Profile, false);
-	elseif ( savedValues_DB.Bottom == true ) then
-		ChoseSort('Up', savedValues_DB.Profile, false);
-	else
-		if ( internValues_DB.showChatMessages == true ) then
-			if ( savedValues_DB.ChatMessagesOn == true ) then
-				print (ColorText(L["SortGroup_sort_no_output"], "option"));
-			end	
-		end
-	end
+	
 	internValues_DB.showChatMessages = false;
+	--need to get rid of this value
 end
--- Breakpoint between Methods and ChoseSort
 
 local function UpdateComboBoxes()
 	if ( savedValues_DB.AutoActivate == true ) then
@@ -590,7 +545,7 @@ local function ProfileChangedEvent()
 		local old_CompactUnitFrameProfiles_ActivateRaidProfile = CompactUnitFrameProfiles_ActivateRaidProfile;
 		hooksecurefunc("CompactUnitFrameProfiles_ActivateRaidProfile", function(profile)
 			if ( (internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true) and savedValues_DB.AlwaysActive == true) then
-				SortDecision(false);
+				ApplySort();
 			else
 				old_CompactUnitFrameProfiles_ActivateRaidProfile(profile);
 			end
@@ -643,12 +598,12 @@ local function createFrame()
 		end)
 	else
 		Main_Frame.cancel = function(Main_Frame)
-			SortDecision(false);
+			ApplySort();
 		end
 	end
 	
 	Main_Frame.okay = function(Main_Frame)
-		SortDecision(true);
+		SwitchRaidProfiles();
 	end
 	InterfaceOptions_AddCategory(Main_Frame);
 	
@@ -719,25 +674,25 @@ local function createDropDownMenu()
 	Main_ddm_Profiles.initialize = function(self, level)
 		if ( internValues_DB.inCombat == false and level == 1 ) then
 			wipe(self.info);
-			ProfileExists();
+			ProfileExists(); --load data into ddm
 			for i, value in pairs(internValues_DB.ddmItems) do
-				self.info.text = value;
-				self.info.value = i;
-				self.info.func = function(item)
-					if ( ProfileExists(value) == true ) then
+				if ( ProfileExists(value) == true ) then
+					self.info.text = value;
+					self.info.value = i;
+					self.info.func = function(item)
 						self.selectedID = item:GetID();
 						self.text:SetText(item);
 						self.value = i;
 						savedValues_DB.Profile = value;
 						UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
 						internValues_DB.showChatMessages = true;
-						SortDecision(true);
+						SwitchRaidProfiles();
 					end
-				end
-				self.info.checked = i == self.text:GetText();
-				UIDropDownMenu_AddButton(self.info, level);
-				if ( savedValues_DB.Profile == self.info.text ) then
-					UIDropDownMenu_SetSelectedID(Main_ddm_Profiles, i);
+					self.info.checked = i == self.text:GetText();
+					UIDropDownMenu_AddButton(self.info, level);
+					if ( savedValues_DB.Profile == self.info.text ) then
+						UIDropDownMenu_SetSelectedID(Main_ddm_Profiles, i);
+					end
 				end
 			end
 		else
@@ -759,11 +714,15 @@ end
 
 
 local function loadData()
+	--load defaults first
+	for key in pairs(defaultValues_DB) do
+		savedValues_DB[key] = defaultValues_DB[key];
+	end
+	
+	--load saved data, fallback are the defaulValues
 	for key in pairs(SortGroupInformation) do
 		if (SortGroupInformation[key] ~= nil and SortGroupInformation[key] ~= "") then
 			savedValues_DB[key] = SortGroupInformation[key];
-		else
-			savedValues_DB[key] = defaultValues_DB[key];
 		end
 	end
 end
@@ -788,10 +747,9 @@ local function frameEvent()
 				internValues_DB.GroupMembersOoC = 0;
 				
 				if ( savedValues_DB.AutoActivate == true ) then
-					SortDecision(true);
-				else
-					SortDecision(false);
+					SwitchRaidProfiles();
 				end
+				ApplySort();
 				
 				for k, v in pairs(UpdateTable) do
 					UpdateTable[k] = nil
@@ -799,10 +757,10 @@ local function frameEvent()
 				end
 			elseif ( event == "GROUP_ROSTER_UPDATE" ) then
 				if ( savedValues_DB.AutoActivate == true ) then
-					SortDecision(true);
-				else
-					SortDecision(false);
+					SwitchRaidProfiles();
 				end
+				ApplySort();
+				
 				if ( savedValues_DB.ShowGroupMembersInCombat == true ) then
 					if ( internValues_DB.inCombat == true ) then
 						local cacheText = L["SortGroup_numberOfMembers_output"];
@@ -834,10 +792,15 @@ local function frameEvent()
 				-- Both are only activatable by changeableValues_DB
 				
 				internValues_DB.showChatMessages = true;
-				SortDecision(true);
+				
+				if ( savedValues_DB.AutoActivate == true ) then
+					SwitchRaidProfiles();
+				end
+				ApplySort();
+				
 				Main_Frame:UnregisterEvent(event);	
 			elseif ( event == "PLAYER_ENTERING_WORLD" and HasLoadedCUFProfiles() == true and internValues_DB.inCombat == false ) then	
-				SortDecision(false);
+				ApplySort();
 				-- Start sort
 			end
 		end);
@@ -859,7 +822,7 @@ local function checkBoxEvent()
 				end
 				SaveOptions();
 				UpdateComboBoxes();
-				SortDecision(false);
+				ApplySort();
 			else
 				UpdateComboBoxes();
 				if ( savedValues_DB.ChatMessagesOn == true ) then
@@ -892,7 +855,7 @@ local function checkBoxEvent()
 				end
 				SaveOptions();
 				UpdateComboBoxes();
-				SortDecision(false);
+				ApplySort();
 			else
 				UpdateComboBoxes();
 				if ( savedValues_DB.ChatMessagesOn == true ) then
@@ -921,7 +884,7 @@ local function checkBoxEvent()
 				end
 				SaveOptions();
 				UpdateComboBoxes();
-				SortDecision(false);
+				ApplySort();
 			else
 				UpdateComboBoxes();
 				if ( savedValues_DB.ChatMessagesOn == true ) then
@@ -950,7 +913,7 @@ local function checkBoxEvent()
 				end
 				SaveOptions();
 				UpdateComboBoxes();
-				SortDecision(false);
+				ApplySort();
 			else
 				UpdateComboBoxes();
 				if ( savedValues_DB.ChatMessagesOn == true ) then
@@ -978,7 +941,7 @@ local function checkBoxEvent()
 					savedValues_DB.BottomDescending = false;
 				end
 				SaveOptions();
-				SortDecision(false);
+				ApplySort();
 				UpdateComboBoxes();
 			else
 				UpdateComboBoxes();
@@ -1007,7 +970,7 @@ local function checkBoxEvent()
 					savedValues_DB.BottomAscending = false;
 				end
 				SaveOptions();
-				SortDecision(false);
+				ApplySort();
 				UpdateComboBoxes();
 			else
 				UpdateComboBoxes();
@@ -1031,16 +994,13 @@ local function checkBoxEvent()
 				internValues_DB.showChatMessages = true;
 				if ( Main_cb_AutoActivate:GetChecked() == true ) then
 					savedValues_DB.AutoActivate = true;
-					if ( savedValues_DB.AutoActivate == true ) then
-						SortDecision(true);
-					else
-						SortDecision(false);
-					end
+					SwitchRaidProfiles();
+					ApplySort();
 				elseif ( Main_cb_AutoActivate:GetChecked() == false ) then
 					savedValues_DB.AutoActivate = false;
 				end
 				SaveOptions();
-				SortDecision(false);
+				ApplySort();
 				UpdateComboBoxes();
 			else
 				UpdateComboBoxes();
@@ -1065,7 +1025,7 @@ local function checkBoxEvent()
 				if ( Main_cb_AlwaysActive:GetChecked() == true ) then
 					savedValues_DB.AlwaysActive = true;
 					UIDropDownMenu_DisableDropDown(Main_ddm_Profiles);
-					SortDecision(false);
+					ApplySort();
 				elseif ( Main_cb_AlwaysActive:GetChecked() == false ) then
 					savedValues_DB.AlwaysActive = false;
 					Main_cb_AutoActivate:Enable();
@@ -1074,7 +1034,7 @@ local function checkBoxEvent()
 				end
 				SaveOptions();
 				UpdateComboBoxes();
-				SortDecision(false);
+				ApplySort();
 			else
 				UpdateComboBoxes();
 				if ( savedValues_DB.ChatMessagesOn == true ) then

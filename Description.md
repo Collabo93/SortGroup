@@ -1,5 +1,3 @@
-
-
 Description
 
 The main focus lies on targeting party members properly with '@party' macros with the default Blizzard Frame. 
@@ -24,8 +22,3 @@ Note
 
 Deactivate 'Keep Groups Together' in your Raid Profiles
 If you change any options in your Raid Profiles reload your UI.
- 
-
-Version 4.x
-
-The main focus for this addon should lay on the sort function itself. Therefore the raid profile switch modul has been moved to the addon 'ProfileSwitcher', if you are interested in.
