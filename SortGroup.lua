@@ -13,6 +13,9 @@ local defaultValues_DB = {
 	Bottom = false,
 	BottomDescending = false,
 	BottomAscending = false,
+	Middle = false,
+	MiddleParty1Top = false,
+	MiddleParty2Top = false,
 	AlwaysActive = false,
 	AutoActivate = true,
 	Profile = nil,
@@ -56,10 +59,13 @@ local Option_Text_Combat = CreateFrame("SimpleHTML", "OptionTextCombat", Option_
 
 local Main_cb_Top = CreateFrame("CheckButton", "MainCbTop", Main_Frame, "UICheckButtonTemplate");
 local Main_cb_Bottom = CreateFrame("CheckButton", "MainCbBottom", Main_Frame, "UICheckButtonTemplate");
+local Main_cb_Middle = CreateFrame("CheckButton", "MainCbMiddle", Main_Frame, "UICheckButtonTemplate");
 local Main_cb_TopDescending = CreateFrame("CheckButton", "MainCbTopDescending", Main_cb_Top, "UICheckButtonTemplate");
 local Main_cb_TopAscending = CreateFrame("CheckButton", "MainCbTopAscending", Main_cb_Top, "UICheckButtonTemplate");
 local Main_cb_BottomDescending = CreateFrame("CheckButton", "MainCbBottomDescending", Main_cb_Bottom, "UICheckButtonTemplate");
 local Main_cb_BottomAscending = CreateFrame("CheckButton", "MainCbBottomAscending", Main_cb_Bottom, "UICheckButtonTemplate");
+local Main_cb_MiddleParty1Top = CreateFrame("CheckButton", "MainCbMiddleParty1Top", Main_cb_Middle, "UICheckButtonTemplate");
+local Main_cb_MiddleParty2Top = CreateFrame("CheckButton", "MainCbMiddleParty2Top", Main_cb_Middle, "UICheckButtonTemplate");
 local Main_cb_AlwaysActive = CreateFrame("CheckButton", "MainCbAlwaysActive", Main_Frame, "UICheckButtonTemplate");
 local Main_cb_AutoActivate = CreateFrame("CheckButton", "MainCbAutoActivate", Main_cb_AlwaysActive, "UICheckButtonTemplate");
 
@@ -139,7 +145,6 @@ local function SwitchRaidProfiles()
 end
 -- Possible switch by Group_Roster, OK button, COMPACT_UNIT_FRAME_PROFILES_LOADED, PLAYER_REGEN_ENABLED, Main_cb_AutoActivate or Main_ddm_Profiles
 
-
 local function SortTopDescending()
 	local CRFSort_TopDownwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
@@ -192,9 +197,35 @@ local function SortBottomAscending()
 	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_BottomDownwards)
 end
 
+local function SortMiddleParty1Top()
+	local CRFSort_MiddleParty1Top = function(t1, t2)
+		if UnitIsUnit(t1, "party1") then
+			return true;
+		elseif UnitIsUnit(t1, "player") or UnitIsUnit(t2, "player") or UnitIsUnit(t2, "party1") then 
+			return false; 			
+		else 
+			return t1 > t2;
+		end 
+	end
+	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_MiddleParty1Top)
+end
+
+local function SortMiddleParty2Top()
+	local CRFSort_MiddleParty2Top = function(t1, t2)
+		if UnitIsUnit(t1, "party2") then
+			return true;
+		elseif UnitIsUnit(t1, "player") or UnitIsUnit(t2, "player") or UnitIsUnit(t2, "party2") then 
+			return false; 			
+		else 
+			return t1 > t2;
+		end 
+	end
+	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_MiddleParty2Top)
+end
+
 local function CheckProfileOptions()
 	--Check if KeepGroupsTogether is checked -> needs to be disabled
-	if ( CompactRaidFrameManager_GetSetting("KeepGroupsTogether") ) then
+	if ( CompactRaidFrameManager_GetSetting("KeepGroupsTogether") == 1 ) then
 		CompactRaidFrameManager_SetSetting("KeepGroupsTogether", "0")
 		if ( savedValues_DB.ChatMessagesOn == true and internValues_DB.showChatMessages == true ) then	
 			print(ColorText(L["SortGroup_Keep_Group_Together_Active_output"], "option"));
@@ -291,6 +322,37 @@ local function ApplySort()
 						CheckProfileOptions();
 						SortBottomDescending();
 					end
+				elseif(savedValues_DB.Middle) then 
+					if ( savedValues_DB.MiddleParty1Top == true ) then
+						if ( internValues_DB.showChatMessages == true ) then
+							if ( savedValues_DB.AlwaysActive == true ) then
+								if ( savedValues_DB.ChatMessagesOn == true ) then
+									print(ColorText(L["SortGroup_sort_top_party1_AlwaysActive_output"], "option"));
+								end
+							else
+								if ( savedValues_DB.ChatMessagesOn == true ) then
+									print(ColorText(L["SortGroup_sort_top_party1_output"]:gsub("'replacement'", savedValues_DB.Profile), "option"));
+								end
+							end
+						end
+						CheckProfileOptions();
+						SortMiddleParty1Top();
+					end
+					if ( savedValues_DB.MiddleParty2Top == true ) then
+						if ( internValues_DB.showChatMessages == true ) then
+							if ( savedValues_DB.AlwaysActive == true ) then
+								if ( savedValues_DB.ChatMessagesOn == true ) then
+									print(ColorText(L["SortGroup_sort_top_party2_AlwaysActive_output"], "option"));
+								end
+							else
+								if ( savedValues_DB.ChatMessagesOn == true ) then
+									print(ColorText(L["SortGroup_sort_top_party2_output"]:gsub("'replacement'", savedValues_DB.Profile), "option"));
+								end
+							end
+						end
+						CheckProfileOptions();
+						SortMiddleParty2Top();
+					end
 					
 				--No sorting option checked
 				else
@@ -309,6 +371,7 @@ local function ApplySort()
 end
 
 local function UpdateComboBoxes()
+	--Set Text for cbs
 	if ( savedValues_DB.AutoActivate == true ) then
 		Main_cb_AutoActivate:SetChecked(true);
 		getglobal(Main_cb_AutoActivate:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_AutoActivate_Text"],"white"));
@@ -334,38 +397,78 @@ local function UpdateComboBoxes()
 	if ( savedValues_DB.Top == true ) then
 		Main_cb_Top:SetChecked(true);
 		Main_cb_Bottom:SetChecked(false);
+		Main_cb_Middle:SetChecked(false);
+		
 		Main_cb_TopDescending:Enable();
 		Main_cb_TopAscending:Enable();
 		Main_cb_BottomDescending:Disable();
 		Main_cb_BottomAscending:Disable();
+		Main_cb_MiddleParty1Top:Disable();
+		Main_cb_MiddleParty2Top:Disable();
+		
 		getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"], "white"));
 		getglobal(Main_cb_TopAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"], "white"));
 		getglobal(Main_cb_BottomDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"],"disable"));
 		getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"],"disable"));
+		getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party1Top_Text"],"disable"));
+		getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party2Top_Text"],"disable"));
 	elseif ( savedValues_DB.Bottom == true ) then
 		Main_cb_Top:SetChecked(false);
 		Main_cb_Bottom:SetChecked(true);
+		Main_cb_Middle:SetChecked(false);
+		
 		Main_cb_TopDescending:Disable();
 		Main_cb_TopAscending:Disable();
 		Main_cb_BottomDescending:Enable();
 		Main_cb_BottomAscending:Enable();
+		Main_cb_MiddleParty1Top:Disable();
+		Main_cb_MiddleParty2Top:Disable();
+		
 		getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"],"disable"));
 		getglobal(Main_cb_TopAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"],"disable"));
 		getglobal(Main_cb_BottomDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"], "white"));
 		getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"], "white"));
-	else
+		getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party1Top_Text"],"disable"));
+		getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party2Top_Text"],"disable"));
+	elseif ( savedValues_DB.Middle == true ) then
 		Main_cb_Top:SetChecked(false);
 		Main_cb_Bottom:SetChecked(false);
+		Main_cb_Middle:SetChecked(true);
+		
 		Main_cb_TopDescending:Disable();
 		Main_cb_TopAscending:Disable();
 		Main_cb_BottomDescending:Disable();
 		Main_cb_BottomAscending:Disable();
+		Main_cb_MiddleParty1Top:Enable();
+		Main_cb_MiddleParty2Top:Enable();
+		
+		getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"],"disable"));
+		getglobal(Main_cb_TopAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"],"disable"));
+		getglobal(Main_cb_BottomDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"], "disable"));
+		getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"], "disable"));
+		getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party1Top_Text"],"white"));
+		getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party2Top_Text"],"white"));
+	else
+		Main_cb_Top:SetChecked(false);
+		Main_cb_Bottom:SetChecked(false);
+		Main_cb_Middle:SetChecked(false);
+		
+		Main_cb_TopDescending:Disable();
+		Main_cb_TopAscending:Disable();
+		Main_cb_BottomDescending:Disable();
+		Main_cb_BottomAscending:Disable();
+		Main_cb_MiddleParty1Top:Disable();
+		Main_cb_MiddleParty2Top:Disable();
+		
 		getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"],"disable"));
 		getglobal(Main_cb_TopAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"],"disable"));
 		getglobal(Main_cb_BottomDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"],"disable"));
 		getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"],"disable"));
+		getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party1Top_Text"],"disable"));
+		getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party2Top_Text"],"disable"));
 	end
 	
+	--Check/uncheck cbs
 	if ( savedValues_DB.TopDescending == true ) then
 		Main_cb_TopDescending:SetChecked(true);
 		Main_cb_TopAscending:SetChecked(false);
@@ -385,6 +488,16 @@ local function UpdateComboBoxes()
 	else
 		Main_cb_BottomDescending:SetChecked(false);
 		Main_cb_BottomAscending:SetChecked(false);
+	end
+	if ( savedValues_DB.MiddleParty1Top == true ) then
+		Main_cb_MiddleParty1Top:SetChecked(true);
+		Main_cb_MiddleParty2Top:SetChecked(false);
+	elseif ( savedValues_DB.MiddleParty2Top == true ) then
+		Main_cb_MiddleParty1Top:SetChecked(false);
+		Main_cb_MiddleParty2Top:SetChecked(true);
+	else
+		Main_cb_MiddleParty1Top:SetChecked(false);
+		Main_cb_MiddleParty2Top:SetChecked(false);
 	end
 	
 	if ( savedValues_DB.ChatMessagesOn == true ) then
@@ -521,9 +634,17 @@ local function resetRaidContainer()
 			end
 		end
 		
+		--[[
 		hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
 			if internValues_DB.inCombat == true and frame:GetName() then
 				UpdateTable[frame:GetName()] = "CompactUnitFrame_UpdateAll"
+			end
+		end)
+		--]]--CompactUnitFrame_UpdateVisible seems to taint
+		
+		hooksecurefunc("CompactUnitFrame_UpdateInVehicle", function(frame)
+			if internValues_DB.inCombat == true and frame:GetName() then
+				UpdateTable[frame:GetName()] = "CompactUnitFrame_UpdateInVehicle"
 			end
 		end)
 		
@@ -639,20 +760,31 @@ local function createText()
 end
 
 local function createCheckbox()	
+	--the three main cb
 	Main_cb_Top:SetPoint("TOPLEFT", Main_Title, 10, -100);
 	Main_cb_Bottom:SetPoint("TOPLEFT", Main_Title, 10, -200);
+	Main_cb_Middle:SetPoint("TOPLEFT", Main_Title, 10, -300);
+	
+	--cb chidlren
 	Main_cb_TopDescending:SetPoint("TOPLEFT", 30, -30);
 	Main_cb_TopAscending:SetPoint("TOPLEFT", 30, -55);
 	Main_cb_BottomDescending:SetPoint("TOPLEFT", 30, -30);
 	Main_cb_BottomAscending:SetPoint("TOPLEFT", 30, -55);
+	Main_cb_MiddleParty1Top:SetPoint("TOPLEFT", 30, -30);
+	Main_cb_MiddleParty2Top:SetPoint("TOPLEFT", 30, -55);
 	Main_cb_AlwaysActive:SetPoint("TOPLEFT", Main_Title, 340, -100);
 	Main_cb_AutoActivate:SetPoint("TOPLEFT",30,-30);	
+	
+	--set Text to cbs
 	getglobal(Main_cb_Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Top_Text"], "white"));
 	getglobal(Main_cb_Bottom:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Bottom_Text"], "white"));
+	getglobal(Main_cb_Middle:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Middle_Text"], "white"))
 	getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"], "white"));
 	getglobal(Main_cb_TopAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"], "white"));
 	getglobal(Main_cb_BottomDescending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Descending_Text"], "white"));
-	getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"], "white"));
+	getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Ascending_Text"], "white"));	
+	getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party1Top_Text"], "white"));
+	getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party2Top_Text"], "white"));	
 	getglobal(Main_cb_AutoActivate:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_AutoActivate_Text"], "white"));
 	getglobal(Main_cb_AlwaysActive:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_AlwaysActive_Text"], "white"));
 	--Main frame
@@ -773,7 +905,6 @@ local function frameEvent()
 							cacheText = cacheText:gsub("'replacement2'", (GetNumGroupMembers() - internValues_DB.GroupMembersOoC) );
 						end
 						print(ColorText(cacheText, "option"));
-						--print("Actuall members: "..GetNumGroupMembers().." , displayed members: ".. (GetNumGroupMembers() - internValues_DB.GroupMembersOoC) );
 					else
 						internValues_DB.GroupMembersOoC = 0;
 					end
@@ -814,6 +945,7 @@ local function checkBoxEvent()
 				if ( Main_cb_Top:GetChecked() == true ) then
 					savedValues_DB.Top = true;
 					savedValues_DB.Bottom = false;
+					savedValues_DB.Middle = false;
 					if ( Main_cb_TopDescending:GetChecked() == false and Main_cb_TopAscending:GetChecked() == false ) then
 						savedValues_DB.TopDescending = true;
 					end
@@ -846,6 +978,7 @@ local function checkBoxEvent()
 				if ( Main_cb_Bottom:GetChecked() == true ) then
 					savedValues_DB.Top = false;
 					savedValues_DB.Bottom = true;
+					savedValues_DB.Middle = false;
 					if ( Main_cb_BottomDescending:GetChecked() == false and Main_cb_BottomAscending:GetChecked() == false ) then
 						savedValues_DB.BottomAscending = true;
 						Main_cb_BottomAscending:SetChecked(true);
@@ -871,6 +1004,40 @@ local function checkBoxEvent()
 		end);
 	Main_cb_Bottom:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
 	--Combobox Bottom
+	
+	Main_cb_Middle:SetScript("OnClick",
+		function()
+			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
+				internValues_DB.showChatMessages = true;
+				if ( Main_cb_Middle:GetChecked() == true ) then
+					savedValues_DB.Top = false;
+					savedValues_DB.Bottom = false;
+					savedValues_DB.Middle = true;
+					if ( Main_cb_MiddleParty1Top:GetChecked() == false and Main_cb_MiddleParty2Top:GetChecked() == false ) then
+						savedValues_DB.MiddleParty1Top = true;
+						Main_cb_MiddleParty1Top:SetChecked(true);
+					end
+				elseif ( Main_cb_Middle:GetChecked() == false ) then	
+					savedValues_DB.Middle = false;
+				end
+				SaveOptions();
+				UpdateComboBoxes();
+				ApplySort();
+			else
+				UpdateComboBoxes();
+				if ( savedValues_DB.ChatMessagesOn == true ) then
+					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
+				end
+			end
+		end);
+	Main_cb_Middle:SetScript("OnEnter", 
+		function(self)
+			GameTooltip:SetOwner(self,"ANCHOR_RIGHT");
+			GameTooltip:AddLine(L["SortGroup_Main_cb_Middle_Text"] .."\n\n" .. ColorText(L["SortGroup_Main_cb_Middle_ToolTip"], "white") , nil, nil, nil, 1);
+			GameTooltip:Show();
+		end);
+	Main_cb_Middle:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
+	--Combobox Middle
 	
 	Main_cb_TopDescending:SetScript("OnClick",
 		function()
@@ -987,6 +1154,64 @@ local function checkBoxEvent()
 		end);
 	Main_cb_BottomAscending:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
 	--Combobox Main_cb_TopDescending
+	
+	Main_cb_MiddleParty1Top:SetScript("OnClick",
+		function()
+			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
+				internValues_DB.showChatMessages = true;
+				if ( Main_cb_MiddleParty1Top:GetChecked() == true ) then
+					savedValues_DB.MiddleParty1Top = true;
+					savedValues_DB.MiddleParty2Top = false;
+				elseif ( Main_cb_MiddleParty1Top:GetChecked() == false ) then	
+					savedValues_DB.MiddleParty1Top = false;
+				end
+				SaveOptions();
+				ApplySort();
+				UpdateComboBoxes();
+			else
+				UpdateComboBoxes();
+				if ( savedValues_DB.ChatMessagesOn == true ) then
+					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
+				end
+			end
+		end);		
+	Main_cb_MiddleParty1Top:SetScript("OnEnter", 
+		function(self)
+			GameTooltip:SetOwner(self,"ANCHOR_RIGHT");
+			GameTooltip:AddLine(L["SortGroup_Main_cb_Party1Top_Text"] .."\n\n" .. ColorText(L["SortGroup_Main_cb_Party1Top_ToolTip"], "white") , nil, nil, nil, 1);
+			GameTooltip:Show();
+		end);
+	Main_cb_MiddleParty1Top:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
+	--Combobox Main_cb_MiddleParty1Top
+	
+	Main_cb_MiddleParty2Top:SetScript("OnClick",
+		function()
+			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
+				internValues_DB.showChatMessages = true;
+				if ( Main_cb_MiddleParty2Top:GetChecked() == true ) then
+					savedValues_DB.MiddleParty1Top = false;
+					savedValues_DB.MiddleParty2Top = true;
+				elseif ( Main_cb_MiddleParty2Top:GetChecked() == false ) then	
+					savedValues_DB.MiddleParty2Top = false;
+				end
+				SaveOptions();
+				ApplySort();
+				UpdateComboBoxes();
+			else
+				UpdateComboBoxes();
+				if ( savedValues_DB.ChatMessagesOn == true ) then
+					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
+				end
+			end
+		end);		
+	Main_cb_MiddleParty2Top:SetScript("OnEnter", 
+		function(self)
+			GameTooltip:SetOwner(self,"ANCHOR_RIGHT");
+			GameTooltip:AddLine(L["SortGroup_Main_cb_Party2Top_Text"] .."\n\n" .. ColorText(L["SortGroup_Main_cb_Party2Top_ToolTip"], "white") , nil, nil, nil, 1);
+			GameTooltip:Show();
+		end);
+	Main_cb_MiddleParty2Top:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
+	--Combobox Main_cb_MiddleParty2Top
 		
 	Main_cb_AutoActivate:SetScript("OnClick",
 		function()

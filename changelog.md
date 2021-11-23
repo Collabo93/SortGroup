@@ -3,6 +3,7 @@
 	Removed Templates
 	Removed Debug
 	Removed redundant code
+	Added a new sort Option: Player in the Middle
 	Code optimizations
 	Vehicle interaction should be protected now
 	Members leaving the party, while player is combat, are now faded out by default.
@@ -10,6 +11,9 @@
 	Small bug fixes
 	AceAddon lib update
 	Flagged for 9.1.5
+	-----
+	Some changes were made over the course of the last couple years. Idk all off them anymore.
+	Not rdy to release yet.
 
 v4.2
 
