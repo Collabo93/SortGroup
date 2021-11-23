@@ -1,9 +1,8 @@
-## Interface: 80000
+## Interface: 90105
 ## Title: SortGroup
 ## Version: 4.3 Alpha
 ## Author: Collabo93
 ## Notes: Sort your group by Party 1-4
-## SavedVariables: SortGroupDefaults
 ## SavedVariablesPerCharacter: SortGroupInformation
 embeds.xml
 Locale\Locales.xml
