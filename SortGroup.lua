@@ -48,7 +48,7 @@ local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "Ga
 
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame); 
-local intern_version = "4.3 Alpha";
+local intern_version = "5.0 Alpha";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version
 local intern_author = "Collabo93"
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author
@@ -72,7 +72,7 @@ local Main_cb_AutoActivate = CreateFrame("CheckButton", "MainCbAutoActivate", Ma
 local Option_cb_ChatMessagesOn = CreateFrame("CheckButton", "OptionCbChatMessagesOn", Option_Text_General, "UICheckButtonTemplate");
 local Option_cb_RaidProfilesUpdateInCombat = CreateFrame("CheckButton", "OptionCbRaidProfilesUpdateInCombat", Option_Text_Combat, "UICheckButtonTemplate");
 local Option_cb_ShowGroupMembersInCombat = CreateFrame("CheckButton", "OptionCbShowGroupMembersInCombat", Option_cb_RaidProfilesUpdateInCombat, "UICheckButtonTemplate");
--- Combo-box Options
+-- Checkbox Options
 
 local Main_ddm_Profiles = CreateFrame("Button", "MainDdmProfiles", Main_cb_AutoActivate, "UIDropDownMenuTemplate");
 -- DropDownMenu
@@ -104,6 +104,7 @@ end
 
 local function ProfileExists(raidProfile)
 	local raidprofilexists = false;
+	internValues_DB.ddmItems = {};
 	for i=1, GetNumRaidProfiles(), 1 do
 		internValues_DB.ddmItems[i] = GetRaidProfileName(i);
 		if ( internValues_DB.ddmItems[i] == raidProfile ) then
@@ -113,6 +114,7 @@ local function ProfileExists(raidProfile)
 	return raidprofilexists;
 end
 --Fills internValues_DB.ddmItems with raidprofiles and checks if raidprofil exists
+--ToDo: empty ddms everytime?
 
 local function SetDefaultProfile()
 	local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", savedValues_DB.Profile);
@@ -123,6 +125,7 @@ local function SetDefaultProfile()
 	UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
 end
 --Set the first Profile to default
+--Used by first login and by ApplySort()
 
 local function ActivateRaidProfile(profile)
 	CompactUnitFrameProfiles_ActivateRaidProfile(profile);
@@ -233,8 +236,6 @@ local function CheckProfileOptions()
 		end
 	end
 end
---necessary changes to apply sort options
---CompactUnitFrameProfilesGeneralOptionsFrameKeepGroupsTogether taints, so User needs to do this
 
 local function ApplySort()	
 	--if always active is off and the saved profile doesnt exist, load a new profile as default
@@ -367,7 +368,6 @@ local function ApplySort()
 	end
 	
 	internValues_DB.showChatMessages = false;
-	--need to get rid of this value
 end
 
 local function UpdateComboBoxes()
@@ -499,7 +499,6 @@ local function UpdateComboBoxes()
 		Main_cb_MiddleParty1Top:SetChecked(false);
 		Main_cb_MiddleParty2Top:SetChecked(false);
 	end
-	
 	if ( savedValues_DB.ChatMessagesOn == true ) then
 		Option_cb_ChatMessagesOn:SetChecked(true);
 	else 
@@ -524,138 +523,78 @@ end
 	
 
 local function resetRaidContainer()	
-	if ( savedValues_DB.RaidProfileBlockInCombat == true ) then
-		--[[
-		hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
-			if UnitExists(frame.unit) then
-				frame:SetScript("OnUpdate", CompactUnitFrame_OnEvent)
-			else
-				frame:SetScript("OnUpdate", nil)
-				
-				--CompactUnitFrame_UpdateMaxHealth(frame);
-				--CompactUnitFrame_UpdateHealth(frame);
-				if frame.healthBar and not frame.newUnit then
-					frame.healthBar:setValue(0);
-				end
-				
-				--CompactUnitFrame_UpdateHealthColor(frame);
-				--CompactUnitFrame_UpdateMaxPower(frame);
-				if frame.powerBar  then
-					frame.powerBar :setValue(0);
-				end
-				--CompactUnitFrame_UpdatePower(frame);
-				--CompactUnitFrame_UpdatePowerColor(frame);
-				
-				--CompactUnitFrame_UpdateName(frame);
-				if not frame.UpdateNameOverride and not frame:UpdateNameOverride() then
-					frame.name:Hide();
-				end
-				
-				--CompactUnitFrame_UpdateWidgetsOnlyMode(frame);
-				--CompactUnitFrame_UpdateSelectionHighlight(frame);
-				frame.selectionHighlight:Hide();
-				
-				--CompactUnitFrame_UpdateAggroHighlight(frame);
-				frame.aggroHighlight:Hide();
-				
-				--CompactUnitFrame_UpdateAggroFlash(frame);
-				--CompactUnitFrame_UpdateHealthBorder(frame);
-				--CompactUnitFrame_UpdateInRange(frame);
-				--CompactUnitFrame_UpdateStatusText(frame);
-				if ( frame.statusText ) then
-					frame.statusText:Hide();
-				end
-				
-				--CompactUnitFrame_UpdateHealPrediction(frame);
-				frame.myHealPrediction:Hide();
-				frame.otherHealPrediction:Hide();
-				frame.totalAbsorb:Hide();
-				frame.totalAbsorbOverlay:Hide();
-				frame.overAbsorbGlow:Hide();
-				frame.myHealAbsorb:Hide();
-				frame.myHealAbsorbLeftShadow:Hide();
-				frame.myHealAbsorbRightShadow:Hide();
-				frame.overHealAbsorbGlow:Hide();
-				
-				--CompactUnitFrame_UpdateRoleIcon(frame);
-				if(frame.roleIcon) then
-					frame.roleIcon:Hide();
-				end
-				
-				--CompactUnitFrame_UpdateReadyCheck(frame);
-				if ( frame.readyCheckIcon or not frame.readyCheckDecay and GetReadyCheckTimeLeft() > 0 ) then
-					frame.readyCheckIcon:Hide();
-				end
-				
-				--CompactUnitFrame_UpdateAuras(frame);
-				--CompactUnitFrame_UpdateCenterStatusIcon(frame);
-				if ( frame.centerStatusIcon ) then
-					frame.centerStatusIcon:Hide();
-				end
-				
-				--CompactUnitFrame_UpdateClassificationIndicator(frame);
-				if (frame.classificationIndicator) then
-					frame.classificationIndicator:Hide();
-				end
-				
-				--CompactUnitFrame_UpdateWidgetSet(frame);
-				CompactUnitFrame_HideAllBuffs(frame);
-				CompactUnitFrame_HideAllDebuffs(frame);
-				CompactUnitFrame_HideAllDispelDebuffs(frame);
-				CompactUnitFrame_UpdateInRange(frame); --Setting Alpha
-			end
-		end);
-		--]]
+	--Hooks for container updates
+	--Isnt perfect, but prevents some taints associated by the sort implementation
+	if ( savedValues_DB.RaidProfileBlockInCombat == true ) then	
 		
-		local old_CompactRaidFrameContainer_TryUpdate = CompactRaidFrameContainer_TryUpdate
-		CompactRaidFrameContainer_TryUpdate = function(self)	
+		--Hook CompactRaidFrameContainer_TryUpdate
+		--Hold if in combat, release if not
+		local origCompactRaidFrameContainer_TryUpdate = CompactRaidFrameContainer_TryUpdate;
+		CompactRaidFrameContainer_TryUpdate = function(self)
 			if ( internValues_DB.inCombat == true ) then
-				UpdateTable[self:GetName()] = "CompactRaidFrameContainer_TryUpdate"
+				UpdateTable[self:GetName()] = "CompactRaidFrameContainer_TryUpdate";
 			else
-				old_CompactRaidFrameContainer_TryUpdate(self)
+				return origCompactRaidFrameContainer_TryUpdate(self);
 			end
-		end
+		end	
 		
-		local old_CompactRaidGroup_UpdateUnits = CompactRaidGroup_UpdateUnits
+		--Hook CompactRaidGroup_UpdateUnits
+		--Potentially not needed
+		local origCompactRaidGroup_UpdateUnits = CompactRaidGroup_UpdateUnits;
 		CompactRaidGroup_UpdateUnits = function(self)
 			if ( internValues_DB.inCombat == true ) then
-				UpdateTable[self:GetName()] = "CompactRaidGroup_UpdateUnits"
+				UpdateTable[self:GetName()] = "CompactRaidGroup_UpdateUnits";
 			else
-				old_CompactRaidGroup_UpdateUnits(self)
+				return origCompactRaidGroup_UpdateUnits(self);
 			end
 		end
-		
-		local old_CompactRaidFrameContainer_UpdateDisplayedUnits = CompactRaidFrameContainer_UpdateDisplayedUnits
-		CompactRaidFrameContainer_UpdateDisplayedUnits = function(self)
-			if ( internValues_DB.inCombat == true ) then
-				UpdateTable[self:GetName()] = "CompactRaidFrameContainer_UpdateDisplayedUnits"
-			else
-				old_CompactRaidFrameContainer_UpdateDisplayedUnits(self)
-			end
-		end
-		
-		--[[
+
+		--Post hook CompactUnitFrame_UpdateAll
+		--To save CompactUnitFrame_UpdateInVehicle() + CompactUnitFrame_UpdateVisible()
 		hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
 			if internValues_DB.inCombat == true and frame:GetName() then
-				UpdateTable[frame:GetName()] = "CompactUnitFrame_UpdateAll"
+				UpdateTable[frame:GetName()] = "CompactUnitFrame_UpdateAll";
 			end
+			return;
 		end)
-		--]]--CompactUnitFrame_UpdateVisible seems to taint
 		
-		hooksecurefunc("CompactUnitFrame_UpdateInVehicle", function(frame)
-			if internValues_DB.inCombat == true and frame:GetName() then
-				UpdateTable[frame:GetName()] = "CompactUnitFrame_UpdateInVehicle"
+		--Post hook CompactUnitFrame_UpdateAll
+		hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
+
+			--check if not empty
+			if frame and frame.displayedUnit then
+			
+				--ignore nameplates. We dont wont to touch those
+				if string.find(frame.displayedUnit,"nameplate") then
+					return;
+					
+				--frame exists
+				elseif UnitExists(frame.displayedUnit) then
+					frame:SetScript("OnEnter", UnitFrame_OnEnter);
+				
+				--frame doesnt exist -> make the frame unclickable to prevent taint
+				else
+					frame:SetScript("OnEnter", nil)
+					frame.name:SetText("?")
+				end
 			end
+			return;
 		end)
+		
 		
 		if ( changeableValues_DB.RaidProfilesUpdateInCombatVisibility == true ) then
-			local old_CompactUnitFrame_UpdateInRange = CompactUnitFrame_UpdateInRange
+			
+			--post hook CompactUnitFrame_UpdateInRange
+			--if unit doesnt exist, set Alpha value for visual reference
 			hooksecurefunc("CompactUnitFrame_UpdateInRange", function(self)
-				if not UnitExists(self.displayedUnit) then
-					self:SetAlpha(0.1);
-				else
-					old_CompactUnitFrame_UpdateInRange(self);
-				end
+				if self and self.displayedUnit then
+					if string.find(self.displayedUnit,"nameplate") then
+						return;
+					elseif not UnitExists(self.displayedUnit) then
+						self:SetAlpha(0.1);
+					end
+				end	
+				return;
 			end)
 		end	
 	end
@@ -674,10 +613,13 @@ local function ProfileChangedEvent()
 	end
 end
 -- Event to catch Raid Profile changes
+-- off by default
 
 local function SaveOptions()
 	for key in pairs(savedValues_DB) do
-		SortGroupInformation[key] = savedValues_DB[key];
+		if ( savedValues_DB[key] ~= nil and savedValues_DB[key] ~= "" ) then
+			SortGroupInformation[key] = savedValues_DB[key];
+		end
 	end
 end
 
@@ -696,7 +638,6 @@ function SortGroup_Method_GetAutoActivate()
 		return false;
 	end
 end
-
 function SortGroup_Method_GetProfile()
 	if ( savedValues_DB.Profile == nil ) then
 		return SortGroupInformation.Profile;
@@ -911,7 +852,7 @@ local function frameEvent()
 				end
 			elseif ( event == "COMPACT_UNIT_FRAME_PROFILES_LOADED" ) then
 				savedValues_DB.Profile = GetRaidProfileName(1);
-				-- first time it's possibly to get the profile name - to set the default value
+				-- load the first profile. Gets replaced by loadData()
 
 				loadData();				
 				UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
@@ -920,7 +861,7 @@ local function frameEvent()
 				
 				resetRaidContainer();
 				ProfileChangedEvent();
-				-- Both are only activatable by changeableValues_DB
+				-- hooks
 				
 				internValues_DB.showChatMessages = true;
 				
@@ -932,7 +873,6 @@ local function frameEvent()
 				Main_Frame:UnregisterEvent(event);	
 			elseif ( event == "PLAYER_ENTERING_WORLD" and HasLoadedCUFProfiles() == true and internValues_DB.inCombat == false ) then	
 				ApplySort();
-				-- Start sort
 			end
 		end);
 end

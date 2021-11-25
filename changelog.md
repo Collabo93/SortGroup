@@ -1,4 +1,4 @@
-4.3 Alpha
+5.0 Alpha
 
 	Removed Templates
 	Removed Debug
@@ -7,12 +7,13 @@
 	Code optimizations
 	Vehicle interaction should be protected now
 	Members leaving the party, while player is combat, are now faded out by default.
+		Fading shouldn't effect nameplate anymore
+	If the game crashes/player gets disconnected, the options should get reset anymore.
 	CVar Check/Set for KeepGroupTogether
 	Small bug fixes
 	AceAddon lib update
 	Flagged for 9.1.5
 	-----
-	Some changes were made over the course of the last couple years. Idk all off them anymore.
 	Not rdy to release yet.
 
 v4.2
