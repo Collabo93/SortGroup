@@ -1,6 +1,6 @@
 ## Interface: 90105
 ## Title: SortGroup
-## Version: 5.0 Alpha
+## Version: 5.0.1 Beta
 ## Author: Collabo93
 ## Notes: Sort your group by Party 1-4
 ## SavedVariablesPerCharacter: SortGroupInformation

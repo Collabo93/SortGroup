@@ -1,6 +1,7 @@
 SortGroupInformation = {};
 local L = LibStub("AceLocale-3.0"):GetLocale("SortGroup");
-local UpdateTable = {};
+local UpdateTable = {}; --saved functions, blocked in combat
+local manager = CompactRaidFrameManager; -- CompactRaidFrameManager Container for sort options -> CompactRaidFrameManager_SetSortMode()
 
 local Main_Frame = CreateFrame("Frame", "MainPanel", InterfaceOptionsFramePanelContainer);
 local Option_Frame = CreateFrame("Frame", "OptionPanel", Main_Frame);
@@ -27,31 +28,27 @@ local savedValues_DB = {};
 
 local changeableValues_DB = {
 	EscIntepretAsOK = false, --Personal recommendation to activate this. Pressing Cancel/Esc will be interpretet as OK - less taint and issues overall. However, someone might don't want this
-	RaidProfilesUpdateInCombatVisibility = true, --Since the friendly nameplate changes this can cause issues in a raid environment. Other then that, it doesn't seem to cause any issue. 
+	RaidProfilesUpdateInCombatVisibility = true, --Frames get an Alpha value, when someone leaves group while player is in combat
 	ChangesInCombat = false; --You can change options in combat. Not recommended
-	CatchProfileSwitchEvent = false, --Experimental. If activated, every manual switch will automatically activate the sort function - to apply it to the new profile. This will cause issues !
 }
 -- Options, which are only changeable here atm. These can cause taint and errors, but can also be useful. Activate on your own "risk"  
 
 local internValues_DB = {
 	showChatMessages = false, -- true when "PLAYER_ENTERING_WORLD" fired or cb Event gets triggered
 	inCombat = false, -- true when "PLAYER_REGEN_DISABLED" fired	
-	ddmItems = {}, -- ddm content
+	ddmItems = {}, -- ddm profile content
 	GroupMembersOoC = 0
 }
-
-local manager = CompactRaidFrameManager;
--- CompactRaidFrameManager Container for sort options -> CompactRaidFrameManager_SetSortMode()
 
 local Main_Title = Main_Frame:CreateFontString("MainTitle", "OVERLAY", "GameFontHighlight");
 local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "GameFontHighlight");
 
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame); 
-local intern_version = "5.0 Alpha";
-local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version
-local intern_author = "Collabo93"
-local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author
+local intern_version = "5.0.1 Beta";
+local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version;
+local intern_author = "Collabo93";
+local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author;
 
 local Option_Text_General = CreateFrame("SimpleHTML", "OptionTextGeneral", Option_Frame);
 local Option_Text_Combat = CreateFrame("SimpleHTML", "OptionTextCombat", Option_Frame);
@@ -114,7 +111,6 @@ local function ProfileExists(raidProfile)
 	return raidprofilexists;
 end
 --Fills internValues_DB.ddmItems with raidprofiles and checks if raidprofil exists
---ToDo: empty ddms everytime?
 
 local function SetDefaultProfile()
 	local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", savedValues_DB.Profile);
@@ -125,7 +121,7 @@ local function SetDefaultProfile()
 	UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
 end
 --Set the first Profile to default
---Used by first login and by ApplySort()
+--Used by first login event and by ApplySort()
 
 local function ActivateRaidProfile(profile)
 	CompactUnitFrameProfiles_ActivateRaidProfile(profile);
@@ -158,7 +154,7 @@ local function SortTopDescending()
 			return t1 < t2;
 		end 
 	end
-	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_TopDownwards)
+	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_TopDownwards);
 end
 
 local function SortTopAscending()
@@ -171,7 +167,7 @@ local function SortTopAscending()
 			return t1 > t2;
 		end 
 	end
-	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_TopUpwards)
+	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_TopUpwards);
 end
 
 local function SortBottomDescending()
@@ -184,7 +180,7 @@ local function SortBottomDescending()
 			return t1 > t2;
 		end 
 	end
-	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_BottomUpwards)
+	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_BottomUpwards);
 end
 
 local function SortBottomAscending()
@@ -197,7 +193,7 @@ local function SortBottomAscending()
 			return t1 < t2;
 		end 
 	end
-	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_BottomDownwards)
+	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_BottomDownwards);
 end
 
 local function SortMiddleParty1Top()
@@ -210,7 +206,7 @@ local function SortMiddleParty1Top()
 			return t1 > t2;
 		end 
 	end
-	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_MiddleParty1Top)
+	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_MiddleParty1Top);
 end
 
 local function SortMiddleParty2Top()
@@ -223,7 +219,7 @@ local function SortMiddleParty2Top()
 			return t1 > t2;
 		end 
 	end
-	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_MiddleParty2Top)
+	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_MiddleParty2Top);
 end
 
 local function CheckProfileOptions()
@@ -539,7 +535,6 @@ local function resetRaidContainer()
 		end	
 		
 		--Hook CompactRaidGroup_UpdateUnits
-		--Potentially not needed
 		local origCompactRaidGroup_UpdateUnits = CompactRaidGroup_UpdateUnits;
 		CompactRaidGroup_UpdateUnits = function(self)
 			if ( internValues_DB.inCombat == true ) then
@@ -555,7 +550,6 @@ local function resetRaidContainer()
 			if internValues_DB.inCombat == true and frame:GetName() then
 				UpdateTable[frame:GetName()] = "CompactUnitFrame_UpdateAll";
 			end
-			return;
 		end)
 		
 		--Post hook CompactUnitFrame_UpdateAll
@@ -568,12 +562,12 @@ local function resetRaidContainer()
 				if string.find(frame.displayedUnit,"nameplate") then
 					return;
 					
-				--frame exists
+				--unit exists
 				elseif UnitExists(frame.displayedUnit) then
 					frame:SetScript("OnEnter", UnitFrame_OnEnter);
 				
-				--frame doesnt exist -> make the frame unclickable to prevent taint
-				else
+				--unit doesnt exist -> make the frame unclickable to prevent taint
+				else	
 					frame:SetScript("OnEnter", nil)
 					frame.name:SetText("?")
 				end
@@ -600,21 +594,6 @@ local function resetRaidContainer()
 	end
 end
 
-local function ProfileChangedEvent()
-	if ( changeableValues_DB.CatchProfileSwitchEvent == true ) then
-		local old_CompactUnitFrameProfiles_ActivateRaidProfile = CompactUnitFrameProfiles_ActivateRaidProfile;
-		hooksecurefunc("CompactUnitFrameProfiles_ActivateRaidProfile", function(profile)
-			if ( (internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true) and savedValues_DB.AlwaysActive == true) then
-				ApplySort();
-			else
-				old_CompactUnitFrameProfiles_ActivateRaidProfile(profile);
-			end
-		end)
-	end
-end
--- Event to catch Raid Profile changes
--- off by default
-
 local function SaveOptions()
 	for key in pairs(savedValues_DB) do
 		if ( savedValues_DB[key] ~= nil and savedValues_DB[key] ~= "" ) then
@@ -622,14 +601,7 @@ local function SaveOptions()
 		end
 	end
 end
-
-local function CountTable(t)
-	local count = 0
-	for _ in pairs(t) do 
-		count = count + 1 
-	end
-	return count;
-end
+--Fired by player logout + cbs
 
 function SortGroup_Method_GetAutoActivate()
 	if ( savedValues_DB.AlwaysActive == false ) then
@@ -860,7 +832,6 @@ local function frameEvent()
 				--Get informations
 				
 				resetRaidContainer();
-				ProfileChangedEvent();
 				-- hooks
 				
 				internValues_DB.showChatMessages = true;
