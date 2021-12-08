@@ -6,7 +6,6 @@
 	Added a new sort Option: Player in the Middle
 	While in combat, interacting with a non existing UnitFrame shouldn't result in taint anymore.
 	Code optimizations
-	Vehicle interaction should be protected now
 	Members leaving the party, while player is combat, are now faded out by default.
 		Fading shouldn't effect nameplate anymore
 	CVar Check/Set for KeepGroupTogether

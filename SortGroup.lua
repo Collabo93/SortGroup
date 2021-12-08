@@ -1,12 +1,11 @@
 SortGroupInformation = {};
 local L = LibStub("AceLocale-3.0"):GetLocale("SortGroup");
-local UpdateTable = {}; --saved functions, blocked in combat
-local manager = CompactRaidFrameManager; -- CompactRaidFrameManager Container for sort options -> CompactRaidFrameManager_SetSortMode()
 
+-- Main Frame
 local Main_Frame = CreateFrame("Frame", "MainPanel", InterfaceOptionsFramePanelContainer);
 local Option_Frame = CreateFrame("Frame", "OptionPanel", Main_Frame);
--- Main Frame
 
+--default values
 local defaultValues_DB = {
 	Top = true,
 	TopDescending = true,
@@ -24,36 +23,42 @@ local defaultValues_DB = {
 	ChatMessagesOn = true,
 	ShowGroupMembersInCombat = false
 }
+
+--saved values, loaded by loadData()
 local savedValues_DB = {};
 
-local changeableValues_DB = {
-	EscIntepretAsOK = false, --Personal recommendation to activate this. Pressing Cancel/Esc will be interpretet as OK - less taint and issues overall. However, someone might don't want this
-	RaidProfilesUpdateInCombatVisibility = true, --Frames get an Alpha value, when someone leaves group while player is in combat
-	ChangesInCombat = false; --You can change options in combat. Not recommended
-}
 -- Options, which are only changeable here atm. These can cause taint and errors, but can also be useful. Activate on your own "risk"  
+local changeableValues_DB = {
+	EscIntepretAsOK = false, --Pressing Cancel/Esc will be interpretet as OK
+	RaidProfilesUpdateInCombatVisibility = true, --Frames get an Alpha value, when someone leaves group while player is in combat
+	ChangesInCombat = false; --You can change options in combat
+}
 
+--values changes by events
 local internValues_DB = {
 	showChatMessages = false, -- true when "PLAYER_ENTERING_WORLD" fired or cb Event gets triggered
 	inCombat = false, -- true when "PLAYER_REGEN_DISABLED" fired	
 	ddmItems = {}, -- ddm profile content
-	GroupMembersOoC = 0
+	GroupMembersOoC = 0 --value 
 }
 
+local UpdateTable = {}; --saved functions, blocked in combat
+local manager = CompactRaidFrameManager; -- CompactRaidFrameManager Container for sort options -> CompactRaidFrameManager_SetSortMode()
+--*End Variables*
+
+--Text
 local Main_Title = Main_Frame:CreateFontString("MainTitle", "OVERLAY", "GameFontHighlight");
 local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "GameFontHighlight");
-
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame); 
-local intern_version = "5.0.1 Beta";
+local intern_version = "5.0.2 Beta";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version;
 local intern_author = "Collabo93";
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author;
-
 local Option_Text_General = CreateFrame("SimpleHTML", "OptionTextGeneral", Option_Frame);
 local Option_Text_Combat = CreateFrame("SimpleHTML", "OptionTextCombat", Option_Frame);
--- Text
 
+--Checkboxes
 local Main_cb_Top = CreateFrame("CheckButton", "MainCbTop", Main_Frame, "UICheckButtonTemplate");
 local Main_cb_Bottom = CreateFrame("CheckButton", "MainCbBottom", Main_Frame, "UICheckButtonTemplate");
 local Main_cb_Middle = CreateFrame("CheckButton", "MainCbMiddle", Main_Frame, "UICheckButtonTemplate");
@@ -65,15 +70,13 @@ local Main_cb_MiddleParty1Top = CreateFrame("CheckButton", "MainCbMiddleParty1To
 local Main_cb_MiddleParty2Top = CreateFrame("CheckButton", "MainCbMiddleParty2Top", Main_cb_Middle, "UICheckButtonTemplate");
 local Main_cb_AlwaysActive = CreateFrame("CheckButton", "MainCbAlwaysActive", Main_Frame, "UICheckButtonTemplate");
 local Main_cb_AutoActivate = CreateFrame("CheckButton", "MainCbAutoActivate", Main_cb_AlwaysActive, "UICheckButtonTemplate");
-
 local Option_cb_ChatMessagesOn = CreateFrame("CheckButton", "OptionCbChatMessagesOn", Option_Text_General, "UICheckButtonTemplate");
 local Option_cb_RaidProfilesUpdateInCombat = CreateFrame("CheckButton", "OptionCbRaidProfilesUpdateInCombat", Option_Text_Combat, "UICheckButtonTemplate");
 local Option_cb_ShowGroupMembersInCombat = CreateFrame("CheckButton", "OptionCbShowGroupMembersInCombat", Option_cb_RaidProfilesUpdateInCombat, "UICheckButtonTemplate");
--- Checkbox Options
 
+--DropDownMenu
 local Main_ddm_Profiles = CreateFrame("Button", "MainDdmProfiles", Main_cb_AutoActivate, "UIDropDownMenuTemplate");
--- DropDownMenu
----End Variables
+--*End Variables*
 
 local function ColorText(text, operation)
 	local defaultColor = "#FFFFFF";
@@ -99,6 +102,7 @@ local function ColorText(text, operation)
 	end
 end
 
+--Fills internValues_DB.ddmItems with raidprofiles and checks if raidprofil exists
 local function ProfileExists(raidProfile)
 	local raidprofilexists = false;
 	internValues_DB.ddmItems = {};
@@ -110,8 +114,9 @@ local function ProfileExists(raidProfile)
 	end
 	return raidprofilexists;
 end
---Fills internValues_DB.ddmItems with raidprofiles and checks if raidprofil exists
 
+--Set the first Profile to default
+--Used by first login event and by ApplySort()
 local function SetDefaultProfile()
 	local cachePrintSendSortOptionToSortBy = L["SortGroup_RaidProfil_dont_exists_output"]:gsub("'replacement'", savedValues_DB.Profile);
 	savedValues_DB.Profile = GetRaidProfileName(1);
@@ -120,13 +125,13 @@ local function SetDefaultProfile()
 	end
 	UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
 end
---Set the first Profile to default
---Used by first login event and by ApplySort()
 
 local function ActivateRaidProfile(profile)
+	print("hi")
 	CompactUnitFrameProfiles_ActivateRaidProfile(profile);
 end
 
+-- Possible switch by Group_Roster, OK button, COMPACT_UNIT_FRAME_PROFILES_LOADED, PLAYER_REGEN_ENABLED, Main_cb_AutoActivate or Main_ddm_Profiles
 local function SwitchRaidProfiles()
 	if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
 		local member = tonumber(GetNumGroupMembers());
@@ -142,8 +147,8 @@ local function SwitchRaidProfiles()
 		end
 	end
 end
--- Possible switch by Group_Roster, OK button, COMPACT_UNIT_FRAME_PROFILES_LOADED, PLAYER_REGEN_ENABLED, Main_cb_AutoActivate or Main_ddm_Profiles
 
+--Top, Descending
 local function SortTopDescending()
 	local CRFSort_TopDownwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
@@ -157,6 +162,7 @@ local function SortTopDescending()
 	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_TopDownwards);
 end
 
+--Top, Ascending
 local function SortTopAscending()
 	local CRFSort_TopUpwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
@@ -170,6 +176,7 @@ local function SortTopAscending()
 	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_TopUpwards);
 end
 
+--Bottom, Descending
 local function SortBottomDescending()
 	local CRFSort_BottomUpwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
@@ -183,6 +190,7 @@ local function SortBottomDescending()
 	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_BottomUpwards);
 end
 
+--Bottom, Ascending
 local function SortBottomAscending()
 	local CRFSort_BottomDownwards = function(t1, t2)
 		if UnitIsUnit(t1, "player") then 
@@ -196,6 +204,7 @@ local function SortBottomAscending()
 	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_BottomDownwards);
 end
 
+--Middle, Party1 on Top
 local function SortMiddleParty1Top()
 	local CRFSort_MiddleParty1Top = function(t1, t2)
 		if UnitIsUnit(t1, "party1") then
@@ -209,6 +218,7 @@ local function SortMiddleParty1Top()
 	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_MiddleParty1Top);
 end
 
+--Middle, Party2 on Top
 local function SortMiddleParty2Top()
 	local CRFSort_MiddleParty2Top = function(t1, t2)
 		if UnitIsUnit(t1, "party2") then
@@ -222,8 +232,8 @@ local function SortMiddleParty2Top()
 	CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_MiddleParty2Top);
 end
 
+--Check if KeepGroupsTogether is checked -> needs to be disabled
 local function CheckProfileOptions()
-	--Check if KeepGroupsTogether is checked -> needs to be disabled
 	if ( CompactRaidFrameManager_GetSetting("KeepGroupsTogether") == 1 ) then
 		CompactRaidFrameManager_SetSetting("KeepGroupsTogether", "0")
 		if ( savedValues_DB.ChatMessagesOn == true and internValues_DB.showChatMessages == true ) then	
@@ -233,7 +243,9 @@ local function CheckProfileOptions()
 	end
 end
 
+--Decision which sort option to activate
 local function ApplySort()	
+
 	--if always active is off and the saved profile doesnt exist, load a new profile as default
 	if ( savedValues_DB.AlwaysActive == false ) then
 		if ( not ProfileExists(savedValues_DB.Profile) ) then
@@ -366,8 +378,10 @@ local function ApplySort()
 	internValues_DB.showChatMessages = false;
 end
 
+--Update cbs - Checked/Unchecked, Text + Text Color, Enabled/Disabledj
 local function UpdateComboBoxes()
-	--Set Text for cbs
+
+	--Load Raid Profile
 	if ( savedValues_DB.AutoActivate == true ) then
 		Main_cb_AutoActivate:SetChecked(true);
 		getglobal(Main_cb_AutoActivate:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_AutoActivate_Text"],"white"));
@@ -375,6 +389,7 @@ local function UpdateComboBoxes()
 		Main_cb_AutoActivate:SetChecked(false);
 	end
 	
+	--Always Active
 	if ( savedValues_DB.AlwaysActive == true ) then
 		UIDropDownMenu_DisableDropDown(Main_ddm_Profiles);
 		Main_cb_AutoActivate:Disable();
@@ -390,6 +405,7 @@ local function UpdateComboBoxes()
 		Main_cb_AlwaysActive:SetChecked(false);
 	end
 	
+	--Player Top/Bottom/Middle
 	if ( savedValues_DB.Top == true ) then
 		Main_cb_Top:SetChecked(true);
 		Main_cb_Bottom:SetChecked(false);
@@ -464,17 +480,19 @@ local function UpdateComboBoxes()
 		getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party2Top_Text"],"disable"));
 	end
 	
-	--Check/uncheck cbs
+	--Top, Ascending/Descending
 	if ( savedValues_DB.TopDescending == true ) then
 		Main_cb_TopDescending:SetChecked(true);
 		Main_cb_TopAscending:SetChecked(false);
 	elseif ( savedValues_DB.TopAscending == true ) then
-			Main_cb_TopDescending:SetChecked(false);
-			Main_cb_TopAscending:SetChecked(true);
+		Main_cb_TopAscending:SetChecked(true);
+		Main_cb_TopDescending:SetChecked(false);
 	else 	
 		Main_cb_TopDescending:SetChecked(false);
 		Main_cb_TopAscending:SetChecked(false);
 	end
+	
+	--Bottom, Ascending/Descending
 	if ( savedValues_DB.BottomDescending == true ) then
 		Main_cb_BottomDescending:SetChecked(true);
 		Main_cb_BottomAscending:SetChecked(false);
@@ -485,6 +503,8 @@ local function UpdateComboBoxes()
 		Main_cb_BottomDescending:SetChecked(false);
 		Main_cb_BottomAscending:SetChecked(false);
 	end
+	
+	--Middle, Party 1 Top/ Party 2 Top
 	if ( savedValues_DB.MiddleParty1Top == true ) then
 		Main_cb_MiddleParty1Top:SetChecked(true);
 		Main_cb_MiddleParty2Top:SetChecked(false);
@@ -495,11 +515,15 @@ local function UpdateComboBoxes()
 		Main_cb_MiddleParty1Top:SetChecked(false);
 		Main_cb_MiddleParty2Top:SetChecked(false);
 	end
+	
+	--Chat messages
 	if ( savedValues_DB.ChatMessagesOn == true ) then
 		Option_cb_ChatMessagesOn:SetChecked(true);
 	else 
 		Option_cb_ChatMessagesOn:SetChecked(false);
 	end
+	
+	--Raid Frames in combat
 	if ( savedValues_DB.RaidProfileBlockInCombat == true ) then
 		Option_cb_RaidProfilesUpdateInCombat:SetChecked(true);
 		Option_cb_ShowGroupMembersInCombat:Enable();
@@ -509,18 +533,18 @@ local function UpdateComboBoxes()
 		Option_cb_ShowGroupMembersInCombat:Disable();
 		getglobal(Option_cb_ShowGroupMembersInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"], "disable"));
 	end
+	
+	--Message for Group Members, while in combat
 	if ( savedValues_DB.ShowGroupMembersInCombat == true ) then
 		Option_cb_ShowGroupMembersInCombat:SetChecked(true);
 	else
 		Option_cb_ShowGroupMembersInCombat:SetChecked(false);
 	end
 end
--- Updating all displayed elements
 	
-
+--Hooks for container updates
+--Isnt perfect, but prevents some taints associated by the sort implementation
 local function resetRaidContainer()	
-	--Hooks for container updates
-	--Isnt perfect, but prevents some taints associated by the sort implementation
 	if ( savedValues_DB.RaidProfileBlockInCombat == true ) then	
 		
 		--Hook CompactRaidFrameContainer_TryUpdate
@@ -546,13 +570,15 @@ local function resetRaidContainer()
 
 		--Post hook CompactUnitFrame_UpdateAll
 		--To save CompactUnitFrame_UpdateInVehicle() + CompactUnitFrame_UpdateVisible()
+		--[[
 		hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
 			if internValues_DB.inCombat == true and frame:GetName() then
 				UpdateTable[frame:GetName()] = "CompactUnitFrame_UpdateAll";
 			end
 		end)
-		
+		--]]
 		--Post hook CompactUnitFrame_UpdateAll
+		
 		hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
 
 			--check if not empty
@@ -594,6 +620,7 @@ local function resetRaidContainer()
 	end
 end
 
+--Fired by player logout + cbs
 local function SaveOptions()
 	for key in pairs(savedValues_DB) do
 		if ( savedValues_DB[key] ~= nil and savedValues_DB[key] ~= "" ) then
@@ -601,8 +628,8 @@ local function SaveOptions()
 		end
 	end
 end
---Fired by player logout + cbs
 
+--Global functions to get informations to ProfileSwitcher - if active
 function SortGroup_Method_GetAutoActivate()
 	if ( savedValues_DB.AlwaysActive == false ) then
 		return savedValues_DB.AutoActivate;
@@ -616,8 +643,6 @@ function SortGroup_Method_GetProfile()
 	end
 	return savedValues_DB.Profile;
 end
---Global functions to get informations to ProfileSwitcher - if active
-
 
 local function createFrame()	
 	Main_Frame.name = "SortGroup";
@@ -626,6 +651,7 @@ local function createFrame()
     Main_Title:SetPoint("TOPLEFT", 12, -18);
     Main_Title:SetText("SortGroup");
 	
+	--esc handle. Cancel = Reset. So sorting needs to get reapplied
 	if ( EscIntepretAsOK == true ) then
 		InterfaceOptionsFrameCancel:SetScript("OnClick", function()
 			InterfaceOptionsFrameOkay:Click();
@@ -673,7 +699,7 @@ local function createText()
 end
 
 local function createCheckbox()	
-	--the three main cb
+	--the three main cbs
 	Main_cb_Top:SetPoint("TOPLEFT", Main_Title, 10, -100);
 	Main_cb_Bottom:SetPoint("TOPLEFT", Main_Title, 10, -200);
 	Main_cb_Middle:SetPoint("TOPLEFT", Main_Title, 10, -300);
@@ -689,6 +715,7 @@ local function createCheckbox()
 	Main_cb_AutoActivate:SetPoint("TOPLEFT",30,-30);	
 	
 	--set Text to cbs
+	--Main frame
 	getglobal(Main_cb_Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Top_Text"], "white"));
 	getglobal(Main_cb_Bottom:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Bottom_Text"], "white"));
 	getglobal(Main_cb_Middle:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Middle_Text"], "white"))
@@ -700,17 +727,17 @@ local function createCheckbox()
 	getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_Party2Top_Text"], "white"));	
 	getglobal(Main_cb_AutoActivate:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_AutoActivate_Text"], "white"));
 	getglobal(Main_cb_AlwaysActive:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Main_cb_AlwaysActive_Text"], "white"));
-	--Main frame
 	
+	--Option frame
 	Option_cb_ChatMessagesOn:SetPoint("TOPLEFT", 15, -20);
 	Option_cb_RaidProfilesUpdateInCombat:SetPoint("TOPLEFT", 15, -20);
 	Option_cb_ShowGroupMembersInCombat:SetPoint("TOPLEFT", 30, -30);
 	getglobal(Option_cb_ChatMessagesOn:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_ChatMessagesOn_Text"], "white"));	
 	getglobal(Option_cb_RaidProfilesUpdateInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_RaidProfilesUpdateInCombat_Text"], "white"));
 	getglobal(Option_cb_ShowGroupMembersInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"], "white"));
-	--Option frame
 end
 
+--DropDownMenu creating, include items
 local function createDropDownMenu()
 	Main_ddm_Profiles.text = _G["MainDdmProfiles"];
 	Main_ddm_Profiles.text:SetText("Empty ddm");
@@ -754,8 +781,7 @@ local function createDropDownMenu()
 		end);
 	Main_ddm_Profiles:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
 end
---DropDownMenu creating, include items
---- End Creating
+--*End Creating*
 
 
 local function loadData()
@@ -772,6 +798,7 @@ local function loadData()
 	end
 end
 
+--Events
 local function frameEvent()
 	Main_Frame:RegisterEvent("COMPACT_UNIT_FRAME_PROFILES_LOADED");
 	Main_Frame:RegisterEvent("PLAYER_ENTERING_WORLD");
@@ -823,16 +850,14 @@ local function frameEvent()
 					end
 				end
 			elseif ( event == "COMPACT_UNIT_FRAME_PROFILES_LOADED" ) then
-				savedValues_DB.Profile = GetRaidProfileName(1);
-				-- load the first profile. Gets replaced by loadData()
+				savedValues_DB.Profile = GetRaidProfileName(1); -- load the first profile. Gets replaced by loadData()
 
 				loadData();				
 				UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
 				UpdateComboBoxes();
 				--Get informations
 				
-				resetRaidContainer();
-				-- hooks
+				resetRaidContainer(); -- hooks
 				
 				internValues_DB.showChatMessages = true;
 				
@@ -848,7 +873,10 @@ local function frameEvent()
 		end);
 end
 
+--ComboBox Events
 local function checkBoxEvent()
+	
+	--Combobox Top
 	Main_cb_Top:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -880,8 +908,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_Top:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
-	--Combobox Top
 		
+	--Combobox Bottom
 	Main_cb_Bottom:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -914,8 +942,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_Bottom:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
-	--Combobox Bottom
 	
+	--Combobox Middle
 	Main_cb_Middle:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -948,8 +976,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_Middle:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
-	--Combobox Middle
 	
+	--Combobox Main_cb_TopDescending
 	Main_cb_TopDescending:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -977,8 +1005,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_TopDescending:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
-	--Combobox Main_cb_TopDescending
 	
+	--Combobox Main_cb_TopDescending
 	Main_cb_TopAscending:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -1006,8 +1034,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_TopAscending:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
-	--Combobox Main_cb_TopDescending
 	
+	--Combobox Main_cb_TopDescending
 	Main_cb_BottomDescending:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -1035,8 +1063,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_BottomDescending:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
-	--Combobox Main_cb_TopDescending
 	
+	--Combobox Main_cb_TopDescending
 	Main_cb_BottomAscending:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -1064,8 +1092,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_BottomAscending:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
-	--Combobox Main_cb_TopDescending
 	
+	--Combobox Main_cb_MiddleParty1Top
 	Main_cb_MiddleParty1Top:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -1093,8 +1121,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_MiddleParty1Top:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
-	--Combobox Main_cb_MiddleParty1Top
 	
+	--Combobox Main_cb_MiddleParty2Top
 	Main_cb_MiddleParty2Top:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -1122,8 +1150,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_MiddleParty2Top:SetScript("OnLeave", function(self) GameTooltip:Hide() end)	
-	--Combobox Main_cb_MiddleParty2Top
 		
+	--Combobox AutoActive
 	Main_cb_AutoActivate:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -1152,8 +1180,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_AutoActivate:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-	--Combobox AutoActive
 		
+	--Combobox savedValues_DB.AlwaysActive
 	Main_cb_AlwaysActive:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -1185,9 +1213,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Main_cb_AlwaysActive:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-	--Combobox savedValues_DB.AlwaysActive
 			
-	
+	--Combobox savedValues_DB.ChatMessagesOn
 	Option_cb_ChatMessagesOn:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -1213,8 +1240,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Option_cb_ChatMessagesOn:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-	--Combobox savedValues_DB.ChatMessagesOn
 	
+	--Combobox savedValues_DB.RaidProfileBlockInCombat
 	Option_cb_RaidProfilesUpdateInCombat:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -1239,8 +1266,8 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Option_cb_RaidProfilesUpdateInCombat:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-	--Combobox savedValues_DB.RaidProfileBlockInCombat
 	
+	--ComboBox Option_cb_ShowGroupMembersInCombat
 	Option_cb_ShowGroupMembersInCombat:SetScript("OnClick",
 		function()
 			if ( internValues_DB.inCombat == false or changeableValues_DB.ChangesInCombat == true ) then
@@ -1265,9 +1292,7 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Option_cb_ShowGroupMembersInCombat:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-	--ComboBox Option_cb_ShowGroupMembersInCombat
 end
---ComboBox Events
 ---End Events
 
 
