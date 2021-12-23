@@ -51,3 +51,5 @@ L["SortGroup_Keep_Group_Together_Active_output"] = "SortGroup: Deaktiviere 'Grup
 L["SortGroup_numberOfMembers_output"] = "SortGroup: Anzahl Gruppenmitglieder 'replacement'('replacement2')" 
 L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"] = "Anzahl Gruppenmitglieder"
 L["SortGroup_Option_cb_ShowGroupMembersInCombat_ToolTip"] = "Zeigt die tatsächliche Anzahl an Gruppenmitgliedern in Kampf.\n\nBemerkung:\nDiese Option ist unanhängig von 'Chat Nachrichten'"
+L["SortGroup_Option_cb_VisibilityInCombat_Text"] = "Visueller Effekt"
+L["SortGroup_Option_cb_VisibilityInCombat_Tooltip"] = "Nicht mehr existierende Gruppenmitglieder werden im Kampf visuell dargestellt"

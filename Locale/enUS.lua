@@ -51,3 +51,5 @@ L["SortGroup_Keep_Group_Together_Active_output"] = "SortGroup: Deactivate 'Keep 
 L["SortGroup_numberOfMembers_output"] = "SortGroup: Number of group members: 'replacement'('replacement2')" 
 L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"] = "Number of group members"
 L["SortGroup_Option_cb_ShowGroupMembersInCombat_ToolTip"] = "Displays the actuall number of group members if you are in combat.\n\nNote:\nThis option is independent from 'Chat messages'"
+L["SortGroup_Option_cb_VisibilityInCombat_Text"] = "Visual effect"
+L["SortGroup_Option_cb_VisibilityInCombat_Tooltip"] = "While in combat, no longer existing group member get visually displayed"

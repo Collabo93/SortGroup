@@ -21,7 +21,8 @@ local defaultValues_DB = {
 	Profile = nil,
 	RaidProfileBlockInCombat = true,
 	ChatMessagesOn = true,
-	ShowGroupMembersInCombat = false
+	ShowGroupMembersInCombat = false,
+	VisibilityInCombat = true
 }
 
 --saved values, loaded by loadData()
@@ -30,7 +31,6 @@ local savedValues_DB = {};
 -- Options, which are only changeable here atm. These can cause taint and errors, but can also be useful. Activate on your own "risk"  
 local changeableValues_DB = {
 	EscIntepretAsOK = false, --Pressing Cancel/Esc will be interpretet as OK
-	RaidProfilesUpdateInCombatVisibility = true, --Frames get an Alpha value, when someone leaves group while player is in combat
 	ChangesInCombat = false; --You can change options in combat
 }
 
@@ -51,7 +51,7 @@ local Main_Title = Main_Frame:CreateFontString("MainTitle", "OVERLAY", "GameFont
 local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "GameFontHighlight");
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame); 
-local intern_version = "5.0.2 Beta";
+local intern_version = "5.0.3 Beta";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version;
 local intern_author = "Collabo93";
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author;
@@ -73,6 +73,7 @@ local Main_cb_AutoActivate = CreateFrame("CheckButton", "MainCbAutoActivate", Ma
 local Option_cb_ChatMessagesOn = CreateFrame("CheckButton", "OptionCbChatMessagesOn", Option_Text_General, "UICheckButtonTemplate");
 local Option_cb_RaidProfilesUpdateInCombat = CreateFrame("CheckButton", "OptionCbRaidProfilesUpdateInCombat", Option_Text_Combat, "UICheckButtonTemplate");
 local Option_cb_ShowGroupMembersInCombat = CreateFrame("CheckButton", "OptionCbShowGroupMembersInCombat", Option_cb_RaidProfilesUpdateInCombat, "UICheckButtonTemplate");
+local Option_cb_VisibilityInCombat = CreateFrame("CheckButton", "OptionCbVisibilityInCombat", Option_cb_RaidProfilesUpdateInCombat, "UICheckButtonTemplate");
 
 --DropDownMenu
 local Main_ddm_Profiles = CreateFrame("Button", "MainDdmProfiles", Main_cb_AutoActivate, "UIDropDownMenuTemplate");
@@ -127,7 +128,6 @@ local function SetDefaultProfile()
 end
 
 local function ActivateRaidProfile(profile)
-	print("hi")
 	CompactUnitFrameProfiles_ActivateRaidProfile(profile);
 end
 
@@ -527,11 +527,15 @@ local function UpdateComboBoxes()
 	if ( savedValues_DB.RaidProfileBlockInCombat == true ) then
 		Option_cb_RaidProfilesUpdateInCombat:SetChecked(true);
 		Option_cb_ShowGroupMembersInCombat:Enable();
+		Option_cb_VisibilityInCombat:Enable();
 		getglobal(Option_cb_ShowGroupMembersInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"], "white"));
+		getglobal(Option_cb_VisibilityInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_VisibilityInCombat_Text"], "white"));
 	else
 		Option_cb_RaidProfilesUpdateInCombat:SetChecked(false);
 		Option_cb_ShowGroupMembersInCombat:Disable();
+		Option_cb_VisibilityInCombat:Disable();
 		getglobal(Option_cb_ShowGroupMembersInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"], "disable"));
+		getglobal(Option_cb_VisibilityInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_VisibilityInCombat_Text"], "disable"));
 	end
 	
 	--Message for Group Members, while in combat
@@ -539,6 +543,13 @@ local function UpdateComboBoxes()
 		Option_cb_ShowGroupMembersInCombat:SetChecked(true);
 	else
 		Option_cb_ShowGroupMembersInCombat:SetChecked(false);
+	end
+	
+	--Visibility/Fading, while in combat
+	if ( savedValues_DB.VisibilityInCombat == true ) then
+		Option_cb_VisibilityInCombat:SetChecked(true);
+	else
+		Option_cb_VisibilityInCombat:SetChecked(false);
 	end
 end
 	
@@ -567,17 +578,6 @@ local function resetRaidContainer()
 				return origCompactRaidGroup_UpdateUnits(self);
 			end
 		end
-
-		--Post hook CompactUnitFrame_UpdateAll
-		--To save CompactUnitFrame_UpdateInVehicle() + CompactUnitFrame_UpdateVisible()
-		--[[
-		hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
-			if internValues_DB.inCombat == true and frame:GetName() then
-				UpdateTable[frame:GetName()] = "CompactUnitFrame_UpdateAll";
-			end
-		end)
-		--]]
-		--Post hook CompactUnitFrame_UpdateAll
 		
 		hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
 
@@ -601,9 +601,7 @@ local function resetRaidContainer()
 			return;
 		end)
 		
-		
-		if ( changeableValues_DB.RaidProfilesUpdateInCombatVisibility == true ) then
-			
+		if ( savedValues_DB.VisibilityInCombat == true ) then
 			--post hook CompactUnitFrame_UpdateInRange
 			--if unit doesnt exist, set Alpha value for visual reference
 			hooksecurefunc("CompactUnitFrame_UpdateInRange", function(self)
@@ -617,6 +615,7 @@ local function resetRaidContainer()
 				return;
 			end)
 		end	
+		
 	end
 end
 
@@ -732,9 +731,12 @@ local function createCheckbox()
 	Option_cb_ChatMessagesOn:SetPoint("TOPLEFT", 15, -20);
 	Option_cb_RaidProfilesUpdateInCombat:SetPoint("TOPLEFT", 15, -20);
 	Option_cb_ShowGroupMembersInCombat:SetPoint("TOPLEFT", 30, -30);
+	Option_cb_VisibilityInCombat:SetPoint("TOPLEFT", 30, -55);
+	
 	getglobal(Option_cb_ChatMessagesOn:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_ChatMessagesOn_Text"], "white"));	
 	getglobal(Option_cb_RaidProfilesUpdateInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_RaidProfilesUpdateInCombat_Text"], "white"));
 	getglobal(Option_cb_ShowGroupMembersInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_ShowGroupMembersInCombat_Text"], "white"));
+	getglobal(Option_cb_VisibilityInCombat:GetName() .. 'Text'):SetText(ColorText(L["SortGroup_Option_cb_VisibilityInCombat_Text"], "white"));
 end
 
 --DropDownMenu creating, include items
@@ -1292,6 +1294,31 @@ local function checkBoxEvent()
 			GameTooltip:Show();
 		end);
 	Option_cb_ShowGroupMembersInCombat:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
+	
+	--ComboBox Option_cb_VisibilityInCombat
+	Option_cb_VisibilityInCombat:SetScript("OnClick",
+		function()
+			if ( internValues_DB.inCombat == false or dchangeableValues_DB.ChangesInCombat == true ) then
+				if ( Option_cb_VisibilityInCombat:GetChecked() == true ) then
+					savedValues_DB.VisibilityInCombat = true;
+				elseif ( Option_cb_VisibilityInCombat:GetChecked() == false ) then
+					savedValues_DB.VisibilityInCombat = false;
+				end
+				SaveOptions();
+			else
+				if ( savedValues_DB.ChatMessagesOn == true ) then
+					print(ColorText(L["SortGroup_in_combat_options_output"], "option"));
+				end
+			end
+			UpdateComboBoxes();
+		end);
+	Option_cb_VisibilityInCombat:SetScript("OnEnter", 
+		function(self)
+			GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+			GameTooltip:AddLine(L["SortGroup_Option_cb_VisibilityInCombat_Text"] .."\n\n" .. ColorText(L["SortGroup_Option_cb_VisibilityInCombat_Tooltip"], "white") , nil, nil, nil, 1);
+			GameTooltip:Show();
+		end);
+	Option_cb_VisibilityInCombat:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
 end
 ---End Events
 

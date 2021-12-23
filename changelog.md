@@ -1,4 +1,4 @@
-5.0.1 Beta
+5.0.3 Beta
 
 	Removed Templates
 	Removed Debug
@@ -8,6 +8,7 @@
 	Code optimizations
 	Members leaving the party, while player is combat, are now faded out by default.
 		Fading shouldn't effect nameplate anymore
+		Checkbox added to activate/deactivate this option
 	CVar Check/Set for KeepGroupTogether
 	Small bug fixes
 	AceAddon lib update
