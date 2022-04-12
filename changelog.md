@@ -1,3 +1,7 @@
+5.0.31 Beta
+
+	Fixed a bug which caused to load raid profiles unintentionally
+	
 5.0.3 Beta
 
 	Removed Templates

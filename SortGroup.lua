@@ -51,7 +51,7 @@ local Main_Title = Main_Frame:CreateFontString("MainTitle", "OVERLAY", "GameFont
 local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "GameFontHighlight");
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame); 
-local intern_version = "5.0.3 Beta";
+local intern_version = "5.0.31 Beta";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version;
 local intern_author = "Collabo93";
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author;
@@ -137,7 +137,7 @@ local function SwitchRaidProfiles()
 		local member = tonumber(GetNumGroupMembers());
 		if ( HasLoadedCUFProfiles() == true and savedValues_DB.Profile ~= nil ) then
 			if ( member <= 5 and ProfileExists(savedValues_DB.Profile) and IsInGroup()) then
-				if ( GetActiveRaidProfile() ~= savedValues_DB.Profile ) then
+				if ( GetActiveRaidProfile() ~= savedValues_DB.Profile  and savedValues_DB.AutoActivate == true ) then
 					ActivateRaidProfile(savedValues_DB.Profile);
 					if ( savedValues_DB.ChatMessagesOn == true ) then
 						print( ColorText(L["SortGroup_RaidProfil_changed_output"]:gsub("'replacement'", savedValues_DB.Profile), "option") );
@@ -820,9 +820,7 @@ local function frameEvent()
 				internValues_DB.inCombat = false;
 				internValues_DB.GroupMembersOoC = 0;
 				
-				if ( savedValues_DB.AutoActivate == true ) then
-					SwitchRaidProfiles();
-				end
+				SwitchRaidProfiles();
 				ApplySort();
 				
 				for k, v in pairs(UpdateTable) do
@@ -830,9 +828,7 @@ local function frameEvent()
 					_G[v](_G[k])
 				end
 			elseif ( event == "GROUP_ROSTER_UPDATE" ) then
-				if ( savedValues_DB.AutoActivate == true ) then
-					SwitchRaidProfiles();
-				end
+				SwitchRaidProfiles();
 				ApplySort();
 				
 				if ( savedValues_DB.ShowGroupMembersInCombat == true ) then
@@ -863,9 +859,7 @@ local function frameEvent()
 				
 				internValues_DB.showChatMessages = true;
 				
-				if ( savedValues_DB.AutoActivate == true ) then
-					SwitchRaidProfiles();
-				end
+				SwitchRaidProfiles();
 				ApplySort();
 				
 				Main_Frame:UnregisterEvent(event);	
