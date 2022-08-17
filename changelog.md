@@ -1,4 +1,5 @@
 5.0.4 Beta
+
 	Added LibStub library
 	Adjustments to prevent taint
 	Small bug fixes
