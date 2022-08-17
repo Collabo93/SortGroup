@@ -1,3 +1,8 @@
+5.0.4 Beta
+	Added LibStub library
+	Adjustments to prevent taint
+	Small bug fixes
+
 5.0.31 Beta
 
 	Fixed a bug which caused to load raid profiles unintentionally

@@ -1,5 +1,6 @@
 SortGroupInformation = {};
 local L = LibStub("AceLocale-3.0"):GetLocale("SortGroup");
+local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0");
 
 -- Main Frame
 local Main_Frame = CreateFrame("Frame", "MainPanel", InterfaceOptionsFramePanelContainer);
@@ -51,7 +52,7 @@ local Main_Title = Main_Frame:CreateFontString("MainTitle", "OVERLAY", "GameFont
 local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "GameFontHighlight");
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame); 
-local intern_version = "5.0.31 Beta";
+local intern_version = "5.0.4 Beta";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version;
 local intern_author = "Collabo93";
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author;
@@ -76,7 +77,8 @@ local Option_cb_ShowGroupMembersInCombat = CreateFrame("CheckButton", "OptionCbS
 local Option_cb_VisibilityInCombat = CreateFrame("CheckButton", "OptionCbVisibilityInCombat", Option_cb_RaidProfilesUpdateInCombat, "UICheckButtonTemplate");
 
 --DropDownMenu
-local Main_ddm_Profiles = CreateFrame("Button", "MainDdmProfiles", Main_cb_AutoActivate, "UIDropDownMenuTemplate");
+--local Main_ddm_Profiles = CreateFrame("Button", "MainDdmProfiles", Main_cb_AutoActivate, "UIDropDownMenuTemplate");
+local Main_ddm_Profiles = LibDD:Create_UIDropDownMenu("MainDdmProfiles", Main_cb_AutoActivate);
 --*End Variables*
 
 local function ColorText(text, operation)
@@ -124,7 +126,7 @@ local function SetDefaultProfile()
 	if ( savedValues_DB.ChatMessagesOn == true ) then
 		print(ColorText(cachePrintSendSortOptionToSortBy:gsub("'replacement2'", savedValues_DB.Profile), "option"));
 	end
-	UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
+	LibDD:UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
 end
 
 local function ActivateRaidProfile(profile)
@@ -628,21 +630,6 @@ local function SaveOptions()
 	end
 end
 
---Global functions to get informations to ProfileSwitcher - if active
-function SortGroup_Method_GetAutoActivate()
-	if ( savedValues_DB.AlwaysActive == false ) then
-		return savedValues_DB.AutoActivate;
-	else
-		return false;
-	end
-end
-function SortGroup_Method_GetProfile()
-	if ( savedValues_DB.Profile == nil ) then
-		return SortGroupInformation.Profile;
-	end
-	return savedValues_DB.Profile;
-end
-
 local function createFrame()	
 	Main_Frame.name = "SortGroup";
 	Main_Title:SetFont("Fonts\\FRIZQT__.TTF", 18);
@@ -741,31 +728,31 @@ end
 
 --DropDownMenu creating, include items
 local function createDropDownMenu()
-	Main_ddm_Profiles.text = _G["MainDdmProfiles"];
-	Main_ddm_Profiles.text:SetText("Empty ddm");
+	Main_ddm_Profiles.text = _G["L_MainDdmProfiles"];
+	--Main_ddm_Profiles.text:SetText("Empty ddm");
 	Main_ddm_Profiles:SetPoint("TOPLEFT", -10, -30);		
-	Main_ddm_Profiles.info = {};
 	Main_ddm_Profiles.initialize = function(self, level)
 		if ( internValues_DB.inCombat == false and level == 1 ) then
-			wipe(self.info);
+			local info = LibDD:UIDropDownMenu_CreateInfo();
 			ProfileExists(); --load data into ddm
+			
 			for i, value in pairs(internValues_DB.ddmItems) do
 				if ( ProfileExists(value) == true ) then
-					self.info.text = value;
-					self.info.value = i;
-					self.info.func = function(item)
+					info.text = value;
+					info.value = i;
+					info.func = function(item)
 						self.selectedID = item:GetID();
-						self.text:SetText(item);
+						self.text = item;
 						self.value = i;
 						savedValues_DB.Profile = value;
-						UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
+						LibDD:UIDropDownMenu_SetText(self, savedValues_DB.Profile);
 						internValues_DB.showChatMessages = true;
 						SwitchRaidProfiles();
 					end
-					self.info.checked = i == self.text:GetText();
-					UIDropDownMenu_AddButton(self.info, level);
-					if ( savedValues_DB.Profile == self.info.text ) then
-						UIDropDownMenu_SetSelectedID(Main_ddm_Profiles, i);
+					info.checked = i == self.text;
+					LibDD:UIDropDownMenu_AddButton(info, level);
+					if ( savedValues_DB.Profile == info.text ) then
+						LibDD:UIDropDownMenu_SetSelectedID(self, i);
 					end
 				end
 			end
@@ -851,7 +838,7 @@ local function frameEvent()
 				savedValues_DB.Profile = GetRaidProfileName(1); -- load the first profile. Gets replaced by loadData()
 
 				loadData();				
-				UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
+				LibDD:UIDropDownMenu_SetText(Main_ddm_Profiles, savedValues_DB.Profile);
 				UpdateComboBoxes();
 				--Get informations
 				
