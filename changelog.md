@@ -1,3 +1,9 @@
+5.1.0
+	Updated for 10.0
+	Remove the Player in the middle sort option for now
+	Removed the options tab
+	
+
 5.0.4 Beta
 
 	Added LibStub library
