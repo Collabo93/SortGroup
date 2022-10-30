@@ -40,7 +40,7 @@ local internValues_DB = {
 local Main_Title = Main_Frame:CreateFontString("MainTitle", "OVERLAY", "GameFontHighlight");
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame);
-local intern_version = "5.1.0";
+local intern_version = "5.1.01";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version;
 local intern_author = "Collabo93";
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author;
@@ -95,6 +95,8 @@ local function SortTopDescending()
         local CRFSort_TopDownwards = function(t1, t2)
             if not UnitExists(t1) then
                 return false;
+            elseif not UnitExists(t2) then
+                return true
             elseif UnitIsUnit(t1, "player") then
                 return true;
             elseif UnitIsUnit(t2, "player") then
@@ -123,6 +125,8 @@ local function SortTopAscending()
         local CRFSort_TopUpwards = function(t1, t2)
             if not UnitExists(t1) then
                 return false;
+            elseif not UnitExists(t2) then
+                return true
             elseif UnitIsUnit(t1, "player") then
                 return true;
             elseif UnitIsUnit(t2, "player") then
@@ -151,6 +155,8 @@ local function SortBottomDescending()
         local CRFSort_BottomUpwards = function(t1, t2)
             if not UnitExists(t1) then
                 return false;
+            elseif not UnitExists(t2) then
+                return true
             elseif UnitIsUnit(t1, "player") then
                 return false;
             elseif UnitIsUnit(t2, "player") then
@@ -179,6 +185,8 @@ local function SortBottomAscending()
         local CRFSort_BottomDownwards = function(t1, t2)
             if not UnitExists(t1) then
                 return false;
+            elseif not UnitExists(t2) then
+                return true
             elseif UnitIsUnit(t1, "player") then
                 return false;
             elseif UnitIsUnit(t2, "player") then
