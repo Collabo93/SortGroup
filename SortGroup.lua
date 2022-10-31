@@ -25,6 +25,7 @@ local savedValues_DB = {};
 -- Options, which are only changeable here atm. These can cause taint and errors, but can also be useful. Activate on your own "risk"
 local changeableValues_DB = {
     ChangesInCombat = false; --You can change options in combat
+    RaidProfileBlockInCombat = true
 }
 
 --values changes by events
@@ -33,14 +34,14 @@ local internValues_DB = {
     inCombat = false, -- true when "PLAYER_REGEN_DISABLED" fired
 }
 
--- local UpdateTable = {}; --saved functions, blocked in combat
+local UpdateTable = {}; --saved functions, blocked in combat
 
 --*End Variables*
 --Text
 local Main_Title = Main_Frame:CreateFontString("MainTitle", "OVERLAY", "GameFontHighlight");
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame);
-local intern_version = "5.1.01";
+local intern_version = "5.1.02 Beta";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version;
 local intern_author = "Collabo93";
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author;
@@ -434,45 +435,56 @@ end
 -- Hooks for container updates
 -- later: 10.0 neccessary?
 local function resetRaidContainer()
-    if (savedValues_DB.RaidProfileBlockInCombat == true) then
-
-        hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
-
-            --check if not empty
-            if frame and frame.displayedUnit then
-
-                --ignore nameplates. We dont wont to touch those
-                if string.find(frame.displayedUnit, "nameplate") then
-                    return;
-
-                    --unit exists
-                elseif UnitExists(frame.displayedUnit) then
-                    frame:SetScript("OnEnter", UnitFrame_OnEnter);
-
-                    --unit doesnt exist -> make the frame unclickable to prevent taint
-                else
-                    frame:SetScript("OnEnter", nil)
-                    frame.name:SetText("?")
-                end
-            end
-            return;
-        end)
+    if (changeableValues_DB.RaidProfileBlockInCombat == true) then
 
 
-        if (savedValues_DB.VisibilityInCombat == false) then
-            --post hook CompactUnitFrame_UpdateInRange
-            --if unit doesnt exist, set Alpha value for visual reference
-            hooksecurefunc("CompactUnitFrame_UpdateInRange", function(self)
-                if self and self.displayedUnit then
-                    if string.find(self.displayedUnit, "nameplate") then
-                        return;
-                    elseif not UnitExists(self.displayedUnit) then
-                        self:SetAlpha(0.1);
-                    end
-                end
-                return;
-            end)
-        end
+        -- print(DEFAULT_OBJECTIVE_TRACKER_MODULE:MarkBlocksUnused("OnEvent"))
+
+        -- local origActionBarButtonEventsFrameMixin_OnEvent = CompactPartyFrame_RefreshMembers;
+        -- CompactPartyFrame_RefreshMembers = function(self)
+        --     print('in');
+        --     if (internValues_DB.inCombat == true) then
+        --         UpdateTable[self:GetName()] = "CompactPartyFrame_RefreshMembers"
+        --     else
+        --         return origActionBarButtonEventsFrameMixin_OnEvent(self);
+        --     end
+        -- end
+
+
+        -- local UIParentRightManagedFrameContainer_SetPoint_orig = ActionBarButtonEventsFrameMixin.OnEvent;
+        -- function ActionBarButtonEventsFrameMixin.OnEvent(event, ...)
+        --     print('in');
+        --     if (internValues_DB.inCombat == true) then
+        --         UpdateTable[self:GetName()] = "ActionBarButtonEventsFrameMixin.OnEvent"
+
+
+        --     else
+        --         return UIParentRightManagedFrameContainer_SetPoint_orig(self, ...);
+        --     end
+
+        -- end
+
+        -- hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
+
+        --     --check if not empty
+        --     if frame and frame.displayedUnit then
+
+        --         --ignore nameplates. We dont wont to touch those
+        --         if string.find(frame.displayedUnit, "nameplate") then
+        --             return;
+
+        --             --unit exists
+        --         elseif UnitExists(frame.displayedUnit) then
+        --             frame:SetScript("OnEnter", UnitFrame_OnEnter);
+
+        --             --unit doesnt exist -> make the frame unclickable to prevent taint
+        --         else
+        --             frame:SetScript("OnEnter", nil)
+        --             frame.name:SetText("?")
+        --         end
+        --     end
+        --     return;
+        -- end)
     end
 end
 
@@ -580,10 +592,10 @@ local function frameEvent()
 
                 ApplySort();
 
-                -- for k, v in pairs(UpdateTable) do
-                --     UpdateTable[k] = nil
-                --     _G[v](_G[k])
-                -- end
+                for k, v in pairs(UpdateTable) do
+                    UpdateTable[k] = nil
+                    _G[v](_G[k])
+                end
             elseif (event == "GROUP_ROSTER_UPDATE") then
                 ApplySort();
             elseif (event == "COMPACT_UNIT_FRAME_PROFILES_LOADED") then
@@ -591,7 +603,7 @@ local function frameEvent()
                 UpdateComboBoxes();
 
                 --Get informations
-                --resetRaidContainer(); -- hooks
+                resetRaidContainer(); -- hooks
                 internValues_DB.showChatMessages = true;
 
                 ApplySort();

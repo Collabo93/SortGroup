@@ -1,4 +1,10 @@
+5.1.02
+
+	Fixed a small bug
+	Removed an old lib reference
+
 5.1.0
+
 	Updated for 10.0
 	Remove the Player in the middle sort option for now
 	Removed the options tab
