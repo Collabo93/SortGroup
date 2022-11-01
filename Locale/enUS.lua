@@ -26,3 +26,4 @@ L["SortGroup_sort_top_party2_output"] = "SortGroup: Active sorted with - Party2,
 L["SortGroup_sort_chat_Messages_On_output"] = "SortGroup: Chat Messages are on"
 L["SortGroup_sort_no_output"] = "SortGroup: Sort function isn't active"
 L["SortGroup_in_combat_options_output"] = "SortGroup: Leave combat to change options"
+L["SortGroup_enter_editMode"] = "SortGroup: Please reload your UI"

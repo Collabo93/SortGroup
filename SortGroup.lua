@@ -120,7 +120,6 @@ end
 
 --Top, Ascending
 local function SortTopAscending()
-
     --Group status check
     if (IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles()) then
         local CRFSort_TopUpwards = function(t1, t2)
@@ -437,54 +436,25 @@ end
 local function resetRaidContainer()
     if (changeableValues_DB.RaidProfileBlockInCombat == true) then
 
-
         -- print(DEFAULT_OBJECTIVE_TRACKER_MODULE:MarkBlocksUnused("OnEvent"))
 
-        -- local origActionBarButtonEventsFrameMixin_OnEvent = CompactPartyFrame_RefreshMembers;
-        -- CompactPartyFrame_RefreshMembers = function(self)
-        --     print('in');
+        hooksecurefunc(EditModeManagerFrame, 'EnterEditMode', function()
+            if (savedValues_DB.ChatMessagesOn) then
+                print(ColorText(L["SortGroup_enter_editMode"], "option"));
+            end
+        end)
+        -- ActionBarButtonEventsFrameMixin:OnEvent
+        -- CompactUnitFrame_UpdateAll
+
+
+        -- local ActionBarButtonEventsFrameMixin_OnEvent_orig = ActionBarButtonEventsFrameMixin.OnEvent;
+        -- function ActionBarButtonEventsFrameMixin:OnEvent(...)
         --     if (internValues_DB.inCombat == true) then
-        --         UpdateTable[self:GetName()] = "CompactPartyFrame_RefreshMembers"
+        --         UpdateTable[self:GetName()] = "ActionBarButtonEventsFrameMixin:OnEvent"
         --     else
-        --         return origActionBarButtonEventsFrameMixin_OnEvent(self);
+        --         return ActionBarButtonEventsFrameMixin_OnEvent_orig(self, ...);
         --     end
         -- end
-
-
-        -- local UIParentRightManagedFrameContainer_SetPoint_orig = ActionBarButtonEventsFrameMixin.OnEvent;
-        -- function ActionBarButtonEventsFrameMixin.OnEvent(event, ...)
-        --     print('in');
-        --     if (internValues_DB.inCombat == true) then
-        --         UpdateTable[self:GetName()] = "ActionBarButtonEventsFrameMixin.OnEvent"
-
-
-        --     else
-        --         return UIParentRightManagedFrameContainer_SetPoint_orig(self, ...);
-        --     end
-
-        -- end
-
-        -- hooksecurefunc("CompactUnitFrame_UpdateAll", function(frame)
-
-        --     --check if not empty
-        --     if frame and frame.displayedUnit then
-
-        --         --ignore nameplates. We dont wont to touch those
-        --         if string.find(frame.displayedUnit, "nameplate") then
-        --             return;
-
-        --             --unit exists
-        --         elseif UnitExists(frame.displayedUnit) then
-        --             frame:SetScript("OnEnter", UnitFrame_OnEnter);
-
-        --             --unit doesnt exist -> make the frame unclickable to prevent taint
-        --         else
-        --             frame:SetScript("OnEnter", nil)
-        --             frame.name:SetText("?")
-        --         end
-        --     end
-        --     return;
-        -- end)
     end
 end
 
@@ -580,6 +550,7 @@ local function frameEvent()
     Main_Frame:RegisterEvent("PLAYER_REGEN_DISABLED");
     Main_Frame:RegisterEvent("PLAYER_REGEN_ENABLED");
     Main_Frame:RegisterEvent("GROUP_ROSTER_UPDATE");
+    Main_Frame:RegisterEvent("PLAYER_ENTERING_WORLD");
     Main_Frame:SetScript("OnEvent",
         function(self, event, ...)
             if (event == "PLAYER_LOGOUT") then
@@ -590,12 +561,13 @@ local function frameEvent()
             elseif (event == "PLAYER_REGEN_ENABLED") then
                 internValues_DB.inCombat = false;
 
-                ApplySort();
-
                 for k, v in pairs(UpdateTable) do
                     UpdateTable[k] = nil
                     _G[v](_G[k])
                 end
+
+
+                ApplySort();
             elseif (event == "GROUP_ROSTER_UPDATE") then
                 ApplySort();
             elseif (event == "COMPACT_UNIT_FRAME_PROFILES_LOADED") then
@@ -608,6 +580,11 @@ local function frameEvent()
 
                 ApplySort();
 
+                Main_Frame:UnregisterEvent(event);
+            elseif (
+                event == "PLAYER_ENTERING_WORLD" and HasLoadedCUFProfiles() == true and internValues_DB.inCombat == false
+                ) then
+                ApplySort();
                 Main_Frame:UnregisterEvent(event);
             end
         end);

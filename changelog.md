@@ -2,6 +2,8 @@
 
 	Fixed a small bug
 	Removed an old lib reference
+	Reloading the UI while in a group should reapply the sort function now
+	Added a message when entering the Edit Mode
 
 5.1.0
 
