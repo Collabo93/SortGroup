@@ -3,7 +3,8 @@
 	Fixed a small bug
 	Removed an old lib reference
 	Reloading the UI while in a group should reapply the sort function now
-	Added a message when entering the Edit Mode
+	Attempts to reduce taint
+	(Added a message when entering the Edit Mode) - deleted
 
 5.1.0
 

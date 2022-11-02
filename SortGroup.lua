@@ -40,7 +40,7 @@ local UpdateTable = {}
 local Main_Title = Main_Frame:CreateFontString('MainTitle', 'OVERLAY', 'GameFontHighlight');
 local Main_Text_Version = CreateFrame('SimpleHTML', 'MainTextVersion', Main_Frame);
 local Main_Text_Author = CreateFrame('SimpleHTML', 'MainTextAuthor', Main_Frame);
-local intern_version = '5.1.04 Beta';
+local intern_version = '5.1.04';
 local intern_versionOutput = '|cFF00FF00Version|r  ' .. intern_version;
 local intern_author = 'Collabo93';
 local intern_authorOutput = '|cFF00FF00Author|r   ' .. intern_author;
@@ -437,24 +437,21 @@ local function resetRaidContainer()
 
         hooksecurefunc(EditModeManagerFrame, 'EnterEditMode', function()
             if savedValues_DB.ChatMessagesOn then
-                print(ColorText(L['SortGroup_enter_editMode'], 'option'));
+                -- print(ColorText(L['SortGroup_enter_editMode'], 'option'));
             end
         end)
 
-        -- If applying the sort function bevor entering a group, no taints it seems
-        local CompactUnitFrame_UpdateAll_orig = CompactUnitFrame_UpdateAll;
-        hooksecurefunc('CompactUnitFrame_UpdateAll', function(frame)
-            if frame:IsForbidden() then return end
-            local name = frame:GetName()
-            if not name or not name:match('^Compact') then return end
-            if InCombatLockdown() then
-                if not UpdateTable[frame] then UpdateTable[frame] = true end
-                print('locked');
-            else
-                CompactUnitFrame_UpdateAll_orig(frame);
-            end
-        end)
-
+        -- local CompactUnitFrame_UpdateAll_orig = CompactUnitFrame_UpdateAll;
+        -- hooksecurefunc('CompactUnitFrame_UpdateAll', function(frame)
+        --     if frame:IsForbidden() then return end
+        --     local name = frame:GetName()
+        --     if not name or not name:match('^Compact') then return end
+        --     if InCombatLockdown() then
+        --         if not UpdateTable[frame] then UpdateTable[frame] = true end
+        --     else
+        --         CompactUnitFrame_UpdateAll_orig(frame);
+        --     end
+        -- end)
     end
 end
 
@@ -558,6 +555,7 @@ local function frameEvent()
                 for frame, _ in pairs(UpdateTable) do
                     UpdateTable[frame] = nil
                 end
+
                 ApplySort();
             elseif event == 'GROUP_ROSTER_UPDATE' then
                 if not InCombatLockdown() then ApplySort() end
