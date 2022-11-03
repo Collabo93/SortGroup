@@ -562,7 +562,6 @@ local function frameEvent()
             elseif event == 'PLAYER_ENTERING_WORLD' and HasLoadedCUFProfiles() and not InCombatLockdown()
             then
                 if internValues_DB.firstLoad then
-                    print("in");
                     loadData();
                     UpdateComboBoxes();
                     resetRaidContainer(); -- hooks
