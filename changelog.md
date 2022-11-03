@@ -1,3 +1,10 @@
+5.1.05
+	
+	Attempts to reduce taint
+	Reloading the UI while in a group should reapply the sort function now
+	Removed an unused lib reference
+	Settings should only load once in a session again
+
 5.1.02
 
 	Fixed a small bug

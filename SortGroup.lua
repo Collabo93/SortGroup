@@ -24,12 +24,13 @@ local savedValues_DB = {};
 -- Options, which are only changeable here atm. These can cause taint and errors, but can also be useful. Activate on your own 'risk'
 local changeableValues_DB = {
     ChangesInCombat = false; --You can change options in combat
-    RaidProfileBlockInCombat = false -- Later: Delete this
+    RaidProfileBlockInCombat = true
 }
 
---values changes by events
+--values changed by events
 local internValues_DB = {
     showChatMessages = false, -- true when 'PLAYER_ENTERING_WORLD' fired or cb Event gets triggered
+    firstLoad = true
 }
 
 local UpdateTable = {}
@@ -40,7 +41,7 @@ local UpdateTable = {}
 local Main_Title = Main_Frame:CreateFontString('MainTitle', 'OVERLAY', 'GameFontHighlight');
 local Main_Text_Version = CreateFrame('SimpleHTML', 'MainTextVersion', Main_Frame);
 local Main_Text_Author = CreateFrame('SimpleHTML', 'MainTextAuthor', Main_Frame);
-local intern_version = '5.1.04';
+local intern_version = '5.1.05';
 local intern_versionOutput = '|cFF00FF00Version|r  ' .. intern_version;
 local intern_author = 'Collabo93';
 local intern_authorOutput = '|cFF00FF00Author|r   ' .. intern_author;
@@ -431,7 +432,6 @@ local function UpdateComboBoxes()
 end
 
 -- Hooks for container updates
--- later: 10.0 neccessary?
 local function resetRaidContainer()
     if changeableValues_DB.RaidProfileBlockInCombat then
 
@@ -561,13 +561,14 @@ local function frameEvent()
                 if not InCombatLockdown() then ApplySort() end
             elseif event == 'PLAYER_ENTERING_WORLD' and HasLoadedCUFProfiles() and not InCombatLockdown()
             then
-                loadData();
-                UpdateComboBoxes();
-
-                --Get informations
-                resetRaidContainer(); -- hooks
-                internValues_DB.showChatMessages = true;
-
+                if internValues_DB.firstLoad then
+                    print("in");
+                    loadData();
+                    UpdateComboBoxes();
+                    resetRaidContainer(); -- hooks
+                    internValues_DB.showChatMessages = true;
+                    internValues_DB.firstLoad = false;
+                end
                 ApplySort();
             end
         end);

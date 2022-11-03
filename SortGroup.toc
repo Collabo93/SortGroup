@@ -1,6 +1,6 @@
 ## Interface: 100000
 ## Title: SortGroup
-## Version: 5.1.04
+## Version: 5.1.05
 ## Author: Collabo93
 ## Notes: Sort your group by Party 1-4
 ## SavedVariablesPerCharacter: SortGroupInformation
