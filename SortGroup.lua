@@ -24,7 +24,7 @@ local savedValues_DB = {};
 -- Options, which are only changeable here atm. These can cause taint and errors, but can also be useful. Activate on your own 'risk'
 local changeableValues_DB = {
     ChangesInCombat = false; --You can change options in combat
-    RaidProfileBlockInCombat = true -- Later: Delete this
+    RaidProfileBlockInCombat = false -- Later: Delete this
 }
 
 --values changes by events
@@ -441,17 +441,17 @@ local function resetRaidContainer()
             end
         end)
 
-        -- local CompactUnitFrame_UpdateAll_orig = CompactUnitFrame_UpdateAll;
-        -- hooksecurefunc('CompactUnitFrame_UpdateAll', function(frame)
-        --     if frame:IsForbidden() then return end
-        --     local name = frame:GetName()
-        --     if not name or not name:match('^Compact') then return end
-        --     if InCombatLockdown() then
-        --         if not UpdateTable[frame] then UpdateTable[frame] = true end
-        --     else
-        --         CompactUnitFrame_UpdateAll_orig(frame);
-        --     end
-        -- end)
+        local CompactUnitFrame_UpdateAll_orig = CompactUnitFrame_UpdateAll;
+        hooksecurefunc('CompactUnitFrame_UpdateAll', function(frame)
+            if frame:IsForbidden() then return end
+            local name = frame:GetName()
+            if not name or not name:match('^Compact') then return end
+            if InCombatLockdown() then
+                if not UpdateTable[frame] then UpdateTable[frame] = true end
+            else
+                CompactUnitFrame_UpdateAll_orig(frame);
+            end
+        end)
     end
 end
 
