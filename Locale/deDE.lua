@@ -27,3 +27,4 @@ L["SortGroup_sort_chat_Messages_On_output"] = "SortGroup: Chat Nachrichten sind 
 L["SortGroup_sort_no_output"] = "SortGroup: Sortierfunktion ist nicht aktiv"
 L["SortGroup_in_combat_options_output"] = "SortGroup: Verlasse den Kampf, um Optionen ändern zu können"
 L["SortGroup_enter_editMode"] = "SortGroup: Bitte lade dein UI neu"
+L['SortGroup_no_raid_style_frames'] = "SortGroup: Please enable \"Use Raid-Style Party Frames\" in the Edit Mode"

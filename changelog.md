@@ -1,17 +1,18 @@
+5.1.06
+
+	Added a message, whichs pops up if "Use Raid-Style Party Frames" is not set
+	If "Target and Focus" in the Edit Mode is checked, sortgroup tries to uncheck it
+		This option spreads taint when exiting the edit mode
+	Switched the sorting options Bottom Descending and Ascending back to where they were originally
+	Changed license to MIT
+	
+
 5.1.05
 	
 	Attempts to reduce taint
 	Reloading the UI while in a group should reapply the sort function now
 	Removed an unused lib reference
 	Settings should only load once in a session again
-
-5.1.02
-
-	Fixed a small bug
-	Removed an old lib reference
-	Reloading the UI while in a group should reapply the sort function now
-	Attempts to reduce taint
-	(Added a message when entering the Edit Mode) - deleted
 
 5.1.0
 
