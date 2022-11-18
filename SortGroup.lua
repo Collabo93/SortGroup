@@ -34,13 +34,13 @@ local internValues_DB = {
 }
 
 local UpdateTable = {}
-
 -- *End Variables*
+
 -- Text
 local Main_Title = Main_Frame:CreateFontString('MainTitle', 'OVERLAY', 'GameFontHighlight');
 local Main_Text_Version = CreateFrame('SimpleHTML', 'MainTextVersion', Main_Frame);
 local Main_Text_Author = CreateFrame('SimpleHTML', 'MainTextAuthor', Main_Frame);
-local intern_version = '5.1.06';
+local intern_version = '5.1.07';
 local intern_versionOutput = '|cFF00FF00Version|r  ' .. intern_version;
 local intern_author = 'Collabo93';
 local intern_authorOutput = '|cFF00FF00Author|r   ' .. intern_author;
@@ -61,8 +61,8 @@ local Main_cb_MiddleParty2Top = CreateFrame('CheckButton', 'MainCbMiddleParty2To
     'UICheckButtonTemplate');
 local Option_cb_ChatMessagesOn = CreateFrame('CheckButton', 'OptionCbChatMessagesOn', Main_Frame,
     'UICheckButtonTemplate');
-
 -- *End Variables*
+
 local function ColorText(text, operation)
     local defaultColor = '#FFFFFF';
     if operation == 'option' then
@@ -109,7 +109,6 @@ local function SortTopDescending()
                 return t1 < t2;
             end
         end
-        -- CompactRaidFrameContainerMixin:SetFlowFilterFunction(CRFSort_TopDownwards);
         CompactPartyFrame_SetFlowSortFunction(CRFSort_TopDownwards);
     end
 
@@ -143,7 +142,6 @@ local function SortTopAscending()
                 return t1 > t2;
             end
         end
-        -- CompactRaidFrameContainerMixin:SetFlowFilterFunction(CRFSort_TopUpwards);
         CompactPartyFrame_SetFlowSortFunction(CRFSort_TopUpwards);
     end
 
@@ -175,10 +173,9 @@ local function SortBottomAscending()
             elseif UnitIsUnit(t2, 'player') then
                 return true;
             else
-                return t1 < t2;
+                return t1 > t2;
             end
         end
-        -- CompactRaidFrameContainerMixin:SetFlowSortFunction(CRFSort_BottomUpwards);
         CompactPartyFrame_SetFlowSortFunction(CRFSort_BottomUpwards);
     end
 
@@ -209,10 +206,9 @@ local function SortBottomDescending()
             elseif UnitIsUnit(t2, 'player') then
                 return true;
             else
-                return t1 > t2;
+                return t1 < t2;
             end
         end
-        -- CompactRaidFrameContainerMixin:SetFlowSortFunction(CRFSort_BottomDownwards);
         CompactPartyFrame_SetFlowSortFunction(CRFSort_BottomDownwards);
 
         -- Testing
@@ -252,35 +248,6 @@ local function SortBottomDescending()
     end
 
 end
-
--- Middle, Party1 on Top
--- Later: Added at antoher point
--- local function SortMiddleParty1Top()
---     local CRFSort_MiddleParty1Top = function(t1, t2)
---         if UnitIsUnit(t1, 'party1' then
---             return true;
---         elseif UnitIsUnit(t1, 'player') or UnitIsUnit(t2, 'player') or UnitIsUnit(t2, 'party1' then
---             return false;
---         else
---             return t1 < t2;
---         end
---     end
---     CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_MiddleParty1Top);
--- end
-
--- Middle, Party2 on Top
--- local function SortMiddleParty2Top()
---     local CRFSort_MiddleParty2Top = function(t1, t2)
---         if UnitIsUnit(t1, 'party2' then
---             return true;
---         elseif UnitIsUnit(t1, 'player') or UnitIsUnit(t2, 'player') or UnitIsUnit(t2, 'party2' then
---             return false;
---         else
---             return t1 < t2;
---         end
---     end
---     CompactRaidFrameContainer_SetFlowSortFunction(manager.container, CRFSort_MiddleParty2Top);
--- end
 
 -- Later
 local function optionsCorrect()
@@ -478,14 +445,7 @@ end
 -- Hooks for container updates
 local function resetRaidContainer()
     if changeableValues_DB.RaidProfileBlockInCombat then
-        -- Maybe later
-        -- hooksecurefunc(EditModeManagerFrame, 'EnterEditMode', function(self)
-        --     if savedValues_DB.ChatMessagesOn then
-        --         -- print(ColorText(L['SortGroup_enter_editMode'], 'option'));
-        --     end
-        -- end)
 
-        local CompactUnitFrame_UpdateAll_orig = CompactUnitFrame_UpdateAll;
         hooksecurefunc('CompactUnitFrame_UpdateAll', function(frame)
             if frame:IsForbidden() then
                 return
@@ -494,12 +454,15 @@ local function resetRaidContainer()
             if not name or not name:match('^Compact') then
                 return
             end
+            if not IsInGroup() or GetNumGroupMembers() > 5 then
+                return
+            end
             if InCombatLockdown() then
                 if not UpdateTable[frame] then
                     UpdateTable[frame] = true
                 end
             else
-                CompactUnitFrame_UpdateAll_orig(frame);
+                return;
             end
         end)
     end
@@ -540,21 +503,17 @@ local function createCheckbox()
     -- the three main cbs
     Main_cb_Top:SetPoint('TOPLEFT', Main_Title, 10, -100);
     Main_cb_Bottom:SetPoint('TOPLEFT', Main_Title, 10, -200);
-    -- Main_cb_Middle:SetPoint('TOPLEFT', Main_Title, 10, -300);
 
     -- cb chidlren
     Main_cb_TopDescending:SetPoint('TOPLEFT', 30, -30);
     Main_cb_TopAscending:SetPoint('TOPLEFT', 30, -55);
     Main_cb_BottomDescending:SetPoint('TOPLEFT', 30, -30);
     Main_cb_BottomAscending:SetPoint('TOPLEFT', 30, -55);
-    -- Main_cb_MiddleParty1Top:SetPoint('TOPLEFT', 30, -30);
-    -- Main_cb_MiddleParty2Top:SetPoint('TOPLEFT', 30, -55);
 
     -- set Text to cbs
     -- Main frame
     getglobal(Main_cb_Top:GetName() .. 'Text'):SetText(ColorText(L['SortGroup_Main_cb_Top_Text'], 'white'));
     getglobal(Main_cb_Bottom:GetName() .. 'Text'):SetText(ColorText(L['SortGroup_Main_cb_Bottom_Text'], 'white'));
-    -- getglobal(Main_cb_Middle:GetName() .. 'Text'):SetText(ColorText(L['SortGroup_Main_cb_Middle_Text'], 'white'))
     getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(
         ColorText(L['SortGroup_Main_cb_Descending_Text'], 'white'));
     getglobal(Main_cb_TopAscending:GetName() .. 'Text'):SetText(
@@ -563,10 +522,6 @@ local function createCheckbox()
         ColorText(L['SortGroup_Main_cb_Descending_Text'], 'white'));
     getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(
         ColorText(L['SortGroup_Main_cb_Ascending_Text'], 'white'));
-    -- getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(ColorText(L['SortGroup_Main_cb_Party1Top_Text'],
-    --     'white'));
-    -- getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(ColorText(L['SortGroup_Main_cb_Party2Top_Text'],
-    --     'white'));
 
     -- Option frame
     Option_cb_ChatMessagesOn:SetPoint('TOPLEFT', Main_Title, 400, -100);
@@ -607,12 +562,10 @@ local function frameEvent()
                 UpdateTable[frame] = nil
             end
 
-            ApplySort();
+            -- ApplySort();
         elseif event == 'GROUP_ROSTER_UPDATE' then
-            if not InCombatLockdown() then
-                ApplySort()
-            end
-        elseif event == 'PLAYER_ENTERING_WORLD' and HasLoadedCUFProfiles() and not InCombatLockdown() then
+            ApplySort()
+        elseif event == 'PLAYER_ENTERING_WORLD' then
             if internValues_DB.firstLoad then
                 loadData();
                 UpdateComboBoxes();
@@ -624,8 +577,6 @@ local function frameEvent()
                 end
             end
             ApplySort();
-            -- elseif event == 'EDIT_MODE_LAYOUTS_UPDATED' then
-            --     print("test")
         end
     end);
 end

@@ -1,9 +1,13 @@
+5.1.07
+
+	Fixed a bug which caused the options to not load properly
+	
+
 5.1.06
 
 	Added a message, whichs pops up if "Use Raid-Style Party Frames" is not set
 	If "Target and Focus" in the Edit Mode is checked, sortgroup tries to uncheck it
 		This option spreads taint when exiting the edit mode
-	Switched the sorting options Bottom Descending and Ascending back to where they were originally
 	Changed license to MIT
 	
 
