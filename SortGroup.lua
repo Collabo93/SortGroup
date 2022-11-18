@@ -93,10 +93,6 @@ local function SortTopDescending()
     if IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() then
 
         local CRFSort_TopDownwards = function(t1, t2)
-            if UnitIsUnit(t1, 'focus') or UnitIsUnit(t2, 'target') then
-                return;
-            end
-
             if not UnitExists(t1) then
                 return false;
             elseif not UnitExists(t2) then
@@ -126,10 +122,6 @@ local function SortTopAscending()
     -- Group status check
     if IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() then
         local CRFSort_TopUpwards = function(t1, t2)
-            if UnitIsUnit(t1, 'focus') or UnitIsUnit(t2, 'target') then
-                return;
-            end
-
             if not UnitExists(t1) then
                 return false;
             elseif not UnitExists(t2) then
@@ -158,12 +150,7 @@ local function SortBottomAscending()
 
     -- Group status check
     if IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() then
-
         local CRFSort_BottomUpwards = function(t1, t2)
-            if UnitIsUnit(t1, 'focus') or UnitIsUnit(t2, 'target') then
-                return;
-            end
-
             if not UnitExists(t1) then
                 return false;
             elseif not UnitExists(t2) then
@@ -193,10 +180,6 @@ local function SortBottomDescending()
     -- Group status check
     if IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() then
         local CRFSort_BottomDownwards = function(t1, t2)
-            if UnitIsUnit(t1, 'focus') or UnitIsUnit(t2, 'target') then
-                return;
-            end
-
             if not UnitExists(t1) then
                 return false;
             elseif not UnitExists(t2) then
