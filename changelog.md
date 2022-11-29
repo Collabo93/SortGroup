@@ -1,4 +1,5 @@
 5.2.0
+
 	Complete rework of the way the sorting gets applied
 		'filter_DB' can be changed to make unique cases
 	Added the player in the middle option
