@@ -12,14 +12,32 @@ local defaultValues_DB = {
     Bottom = false,
     BottomDescending = false,
     BottomAscending = false,
-    ChatMessagesOn = true
-    -- Middle = false,
-    -- MiddleParty1Top = false,
-    -- MiddleParty2Top = false,
+    Middle = false,
+    MiddleUnevenTop = false,
+    MiddleUnevenBottom = false,
+    ChatMessagesOn = true,
+    HideInactiveSlots = true
 }
 
 -- saved values, loaded by loadData()
 local savedValues_DB = {};
+
+-- filters
+-- change Strings, if you want a specific filter
+local filter_DB = {
+    top = {
+        descending = {"player", "party1", "party2", "party3", "party4"},
+        ascending = {"player", "party4", "party3", "party2", "party1"}
+    },
+    bottom = {
+        descending = {"party1", "party2", "party3", "party4", "player"},
+        ascending = {"party4", "party3", "party2", "party1", "player"}
+    },
+    middle = {
+        unevenTop = {"party3", "party1", "player", "party2", "party4"},
+        unevenBottom = {"party4", "party2", "player", "party1", "party3"}
+    }
+};
 
 -- Options, which are only changeable here atm. These can cause taint and errors, but can also be useful. Activate on your own 'risk'
 local changeableValues_DB = {
@@ -40,7 +58,9 @@ local UpdateTable = {}
 local Main_Title = Main_Frame:CreateFontString('MainTitle', 'OVERLAY', 'GameFontHighlight');
 local Main_Text_Version = CreateFrame('SimpleHTML', 'MainTextVersion', Main_Frame);
 local Main_Text_Author = CreateFrame('SimpleHTML', 'MainTextAuthor', Main_Frame);
-local intern_version = '5.1.07';
+local SortBy_Text = CreateFrame('SimpleHTML', 'SortBy_Text', Main_Frame);
+local Option_Text = CreateFrame('SimpleHTML', 'Option_Text', Main_Frame);
+local intern_version = '5.2.0';
 local intern_versionOutput = '|cFF00FF00Version|r  ' .. intern_version;
 local intern_author = 'Collabo93';
 local intern_authorOutput = '|cFF00FF00Author|r   ' .. intern_author;
@@ -55,12 +75,15 @@ local Main_cb_BottomDescending = CreateFrame('CheckButton', 'MainCbBottomDescend
     'UICheckButtonTemplate');
 local Main_cb_BottomAscending = CreateFrame('CheckButton', 'MainCbBottomAscending', Main_cb_Bottom,
     'UICheckButtonTemplate');
-local Main_cb_MiddleParty1Top = CreateFrame('CheckButton', 'MainCbMiddleParty1Top', Main_cb_Middle,
+local Main_cb_MiddleUnevenTop = CreateFrame('CheckButton', 'MainCbMiddlePUnevenTop', Main_cb_Middle,
     'UICheckButtonTemplate');
-local Main_cb_MiddleParty2Top = CreateFrame('CheckButton', 'MainCbMiddleParty2Top', Main_cb_Middle,
+local Main_cb_MiddlePUnevenBottom = CreateFrame('CheckButton', 'MainCbMiddleUnevenBottom', Main_cb_Middle,
     'UICheckButtonTemplate');
-local Option_cb_ChatMessagesOn = CreateFrame('CheckButton', 'OptionCbChatMessagesOn', Main_Frame,
+local Option_cb_ChatMessagesOn = CreateFrame('CheckButton', 'OptionCbChatMessagesOn', Option_Text,
     'UICheckButtonTemplate');
+local Option_cb_HideInactiveSlots = CreateFrame('CheckButton', 'OptionCbHideInactiveSlots', Option_Text,
+    'UICheckButtonTemplate');
+
 -- *End Variables*
 
 local function ColorText(text, operation)
@@ -87,152 +110,57 @@ local function ColorText(text, operation)
     end
 end
 
--- Top, Descendingd
-local function SortTopDescending()
-    -- Group status check
+function ApplyFilter(filter)
+
     if IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() then
 
-        local CRFSort_TopDownwards = function(t1, t2)
-            if not UnitExists(t1) then
-                return false;
-            elseif not UnitExists(t2) then
-                return true
-            elseif UnitIsUnit(t1, 'player') then
-                return true;
-            elseif UnitIsUnit(t2, 'player') then
-                return false;
-            else
-                return t1 < t2;
+        -- possible implementation for other frames
+        local frames = {
+            ["Blizzard"] = "CompactPartyFrameMember"
+            -- ["ElvUI"] = "ElvUF_PartyGroup"
+        };
+
+        local units = {};
+
+        for index, token in ipairs(filter) do
+            table.insert(units, token);
+        end
+
+        for index, realPartyMemberToken in ipairs(units) do
+            local unitFrame = _G[frames.Blizzard .. index];
+            CompactUnitFrame_ClearWidgetSet(unitFrame);
+            unitFrame:Hide();
+            unitFrame.unitExists = false;
+        end
+
+        local playerDiplayed = false;
+        for index, realPartyMemberToken in ipairs(units) do
+            local unitFrame = _G[frames.Blizzard .. index];
+            local usePlayerOverride = EditModeManagerFrame:ArePartyFramesForcedShown() and
+                                          not UnitExists(realPartyMemberToken);
+            local unitToken = usePlayerOverride and "player" or realPartyMemberToken;
+
+            if savedValues_DB.HideInactiveSlots and not UnitExists(unitToken) then
+                if playerDiplayed then
+                    return false;
+                end
+                unitToken = "player";
             end
-        end
-        CompactPartyFrame_SetFlowSortFunction(CRFSort_TopDownwards);
-    end
 
-    if internValues_DB.showChatMessages then
-        if savedValues_DB.ChatMessagesOn then
-            print(ColorText(L['SortGroup_sort_top_descending_output'], 'option'));
+            if unitToken == "player" then
+                playerDiplayed = true;
+            end
+
+            CompactUnitFrame_SetUnit(unitFrame, unitToken);
+            CompactUnitFrame_SetUpFrame(unitFrame, DefaultCompactUnitFrameSetup);
+            CompactUnitFrame_SetUpdateAllEvent(unitFrame, "GROUP_ROSTER_UPDATE");
         end
 
+        CompactRaidGroup_UpdateBorder(CompactPartyFrame);
+        PartyFrame:UpdatePaddingAndLayout();
     end
 end
 
--- Top, Ascending
-local function SortTopAscending()
-
-    -- Group status check
-    if IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() then
-        local CRFSort_TopUpwards = function(t1, t2)
-            if not UnitExists(t1) then
-                return false;
-            elseif not UnitExists(t2) then
-                return true
-            elseif UnitIsUnit(t1, 'player') then
-                return true;
-            elseif UnitIsUnit(t2, 'player') then
-                return false;
-            else
-                return t1 > t2;
-            end
-        end
-        CompactPartyFrame_SetFlowSortFunction(CRFSort_TopUpwards);
-    end
-
-    if internValues_DB.showChatMessages then
-        if savedValues_DB.ChatMessagesOn then
-            print(ColorText(L['SortGroup_sort_top_ascending_output'], 'option'));
-        end
-
-    end
-end
-
--- Bottom, Descending
-local function SortBottomAscending()
-
-    -- Group status check
-    if IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() then
-        local CRFSort_BottomUpwards = function(t1, t2)
-            if not UnitExists(t1) then
-                return false;
-            elseif not UnitExists(t2) then
-                return true
-            elseif UnitIsUnit(t1, 'player') then
-                return false;
-            elseif UnitIsUnit(t2, 'player') then
-                return true;
-            else
-                return t1 > t2;
-            end
-        end
-        CompactPartyFrame_SetFlowSortFunction(CRFSort_BottomUpwards);
-    end
-
-    if internValues_DB.showChatMessages then
-        if savedValues_DB.ChatMessagesOn then
-            print(ColorText(L['SortGroup_sort_bottom_descending_output'], 'option'));
-        end
-
-    end
-end
-
--- Bottom, Ascending
-local function SortBottomDescending()
-
-    -- Group status check
-    if IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() then
-        local CRFSort_BottomDownwards = function(t1, t2)
-            if not UnitExists(t1) then
-                return false;
-            elseif not UnitExists(t2) then
-                return true
-            elseif UnitIsUnit(t1, 'player') then
-                return false;
-            elseif UnitIsUnit(t2, 'player') then
-                return true;
-            else
-                return t1 < t2;
-            end
-        end
-        CompactPartyFrame_SetFlowSortFunction(CRFSort_BottomDownwards);
-
-        -- Testing
-        -- local units = {};
-        -- table.insert(units, "player");
-
-        -- for i = 2, MEMBERS_PER_RAID_GROUP do
-        --     table.insert(units, "party" .. (i - 1));
-        -- end
-        -- table.sort(units, CompactPartyFrame.flowSortFunc);
-
-        -- for index, realPartyMemberToken in ipairs(units) do
-        --     if UnitExists(realPartyMemberToken) and UnitIsUnit(realPartyMemberToken, 'focus') then
-        --         print("in");
-        --     end
-
-        --     local unitFrame = _G["CompactPartyFrameMember" .. index];
-
-        --     local usePlayerOverride = EditModeManagerFrame:ArePartyFramesForcedShown() and
-        --                                   not UnitExists(realPartyMemberToken);
-        --     local unitToken = usePlayerOverride and "player" or realPartyMemberToken;
-
-        --     CompactUnitFrame_SetUnit(unitFrame, unitToken);
-        --     CompactUnitFrame_SetUpFrame(unitFrame, DefaultCompactUnitFrameSetup);
-        --     CompactUnitFrame_SetUpdateAllEvent(unitFrame, "GROUP_ROSTER_UPDATE");
-        -- end
-
-        -- CompactRaidGroup_UpdateBorder(CompactPartyFrame);
-        -- PartyFrame:UpdatePaddingAndLayout();
-    end
-
-    if internValues_DB.showChatMessages then
-        if savedValues_DB.ChatMessagesOn then
-            print(ColorText(L['SortGroup_sort_bottom_ascending_output'], 'option'));
-        end
-
-    end
-
-end
-
--- Later
 local function optionsCorrect()
     if not EditModeManagerFrame:UseRaidStylePartyFrames() then
         if internValues_DB.showChatMessages then
@@ -245,7 +173,7 @@ local function optionsCorrect()
     return true;
 end
 
--- Decision which sort option to activate
+-- Decision which filter option to activate
 local function ApplySort()
 
     -- combat status check
@@ -254,28 +182,71 @@ local function ApplySort()
         -- Everything is fine, sorting can get applied
         if savedValues_DB.Top then
             if savedValues_DB.TopDescending then
-                SortTopDescending();
+                ApplyFilter(filter_DB.top.descending);
+                if internValues_DB.showChatMessages then
+                    if savedValues_DB.ChatMessagesOn then
+                        print(ColorText(L['SortGroup_sort_top_descending_output'], 'option'));
+                    end
+                end
+
             end
             if savedValues_DB.TopAscending then
-                SortTopAscending();
+                ApplyFilter(filter_DB.top.ascending);
+                if internValues_DB.showChatMessages then
+                    if savedValues_DB.ChatMessagesOn then
+                        print(ColorText(L['SortGroup_sort_top_ascending_output'], 'option'));
+                    end
+                end
+
             end
         elseif savedValues_DB.Bottom then
             if savedValues_DB.BottomDescending then
-                SortBottomDescending();
+                ApplyFilter(filter_DB.bottom.descending);
+                if internValues_DB.showChatMessages then
+                    if savedValues_DB.ChatMessagesOn then
+                        print(ColorText(L['SortGroup_sort_top_descending_output'], 'option'));
+                    end
+                end
+
             end
             if savedValues_DB.BottomAscending then
-                SortBottomAscending();
+                ApplyFilter(filter_DB.bottom.ascending);
+                if internValues_DB.showChatMessages then
+                    if savedValues_DB.ChatMessagesOn then
+                        print(ColorText(L['SortGroup_sort_bottom_ascending_output'], 'option'));
+                    end
+                end
+
             end
+        elseif savedValues_DB.Middle then
+            if savedValues_DB.MiddleUnevenTop then
+                ApplyFilter(filter_DB.middle.unevenTop);
+                if internValues_DB.showChatMessages then
+                    if savedValues_DB.ChatMessagesOn then
+                        print(ColorText(L['SortGroup_sort_uneven_top_output'], 'option'));
+                    end
+                end
+
+            end
+            if savedValues_DB.MiddleUnevenBottom then
+                ApplyFilter(filter_DB.middle.unevenBottom);
+                if internValues_DB.showChatMessages then
+                    if savedValues_DB.ChatMessagesOn then
+                        print(ColorText(L['SortGroup_sort_uneven_bottom_output'], 'option'));
+                    end
+                end
+
+            end
+
         else
             if internValues_DB.showChatMessages then
                 if savedValues_DB.ChatMessagesOn then
                     print(ColorText(L['SortGroup_sort_no_output'], 'option'));
                 end
             end
+
         end
-
     end
-
     internValues_DB.showChatMessages = false;
 end
 
@@ -292,8 +263,8 @@ local function UpdateComboBoxes()
         Main_cb_TopAscending:Enable();
         Main_cb_BottomDescending:Disable();
         Main_cb_BottomAscending:Disable();
-        Main_cb_MiddleParty1Top:Disable();
-        Main_cb_MiddleParty2Top:Disable();
+        Main_cb_MiddleUnevenTop:Disable();
+        Main_cb_MiddlePUnevenBottom:Disable();
 
         getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(
             ColorText(L['SortGroup_Main_cb_Descending_Text'], 'white'));
@@ -303,10 +274,10 @@ local function UpdateComboBoxes()
             L['SortGroup_Main_cb_Descending_Text'], 'disable'));
         getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(
             ColorText(L['SortGroup_Main_cb_Ascending_Text'], 'disable'));
-        getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(
-            ColorText(L['SortGroup_Main_cb_Party1Top_Text'], 'disable'));
-        getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(
-            ColorText(L['SortGroup_Main_cb_Party2Top_Text'], 'disable'));
+        getglobal(Main_cb_MiddleUnevenTop:GetName() .. 'Text'):SetText(
+            ColorText(L['SortGroup_Main_cb_UnevenTop_Text'], 'disable'));
+        getglobal(Main_cb_MiddlePUnevenBottom:GetName() .. 'Text'):SetText(ColorText(
+            L['SortGroup_Main_cb_UnevenBottom_Text'], 'disable'));
     elseif savedValues_DB.Bottom then
         Main_cb_Top:SetChecked(false);
         Main_cb_Bottom:SetChecked(true);
@@ -316,8 +287,8 @@ local function UpdateComboBoxes()
         Main_cb_TopAscending:Disable();
         Main_cb_BottomDescending:Enable();
         Main_cb_BottomAscending:Enable();
-        Main_cb_MiddleParty1Top:Disable();
-        Main_cb_MiddleParty2Top:Disable();
+        Main_cb_MiddleUnevenTop:Disable();
+        Main_cb_MiddlePUnevenBottom:Disable();
 
         getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(
             ColorText(L['SortGroup_Main_cb_Descending_Text'], 'disable'));
@@ -327,10 +298,10 @@ local function UpdateComboBoxes()
             L['SortGroup_Main_cb_Descending_Text'], 'white'));
         getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(
             ColorText(L['SortGroup_Main_cb_Ascending_Text'], 'white'));
-        getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(
-            ColorText(L['SortGroup_Main_cb_Party1Top_Text'], 'disable'));
-        getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(
-            ColorText(L['SortGroup_Main_cb_Party2Top_Text'], 'disable'));
+        getglobal(Main_cb_MiddleUnevenTop:GetName() .. 'Text'):SetText(
+            ColorText(L['SortGroup_Main_cb_UnevenTop_Text'], 'disable'));
+        getglobal(Main_cb_MiddlePUnevenBottom:GetName() .. 'Text'):SetText(ColorText(
+            L['SortGroup_Main_cb_UnevenBottom_Text'], 'disable'));
     elseif savedValues_DB.Middle then
         Main_cb_Top:SetChecked(false);
         Main_cb_Bottom:SetChecked(false);
@@ -340,8 +311,8 @@ local function UpdateComboBoxes()
         Main_cb_TopAscending:Disable();
         Main_cb_BottomDescending:Disable();
         Main_cb_BottomAscending:Disable();
-        Main_cb_MiddleParty1Top:Enable();
-        Main_cb_MiddleParty2Top:Enable();
+        Main_cb_MiddleUnevenTop:Enable();
+        Main_cb_MiddlePUnevenBottom:Enable();
 
         getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(
             ColorText(L['SortGroup_Main_cb_Descending_Text'], 'disable'));
@@ -351,10 +322,10 @@ local function UpdateComboBoxes()
             L['SortGroup_Main_cb_Descending_Text'], 'disable'));
         getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(
             ColorText(L['SortGroup_Main_cb_Ascending_Text'], 'disable'));
-        getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(
-            ColorText(L['SortGroup_Main_cb_Party1Top_Text'], 'white'));
-        getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(
-            ColorText(L['SortGroup_Main_cb_Party2Top_Text'], 'white'));
+        getglobal(Main_cb_MiddleUnevenTop:GetName() .. 'Text'):SetText(
+            ColorText(L['SortGroup_Main_cb_UnevenTop_Text'], 'white'));
+        getglobal(Main_cb_MiddlePUnevenBottom:GetName() .. 'Text'):SetText(ColorText(
+            L['SortGroup_Main_cb_UnevenBottom_Text'], 'white'));
     else
         Main_cb_Top:SetChecked(false);
         Main_cb_Bottom:SetChecked(false);
@@ -364,8 +335,8 @@ local function UpdateComboBoxes()
         Main_cb_TopAscending:Disable();
         Main_cb_BottomDescending:Disable();
         Main_cb_BottomAscending:Disable();
-        Main_cb_MiddleParty1Top:Disable();
-        Main_cb_MiddleParty2Top:Disable();
+        Main_cb_MiddleUnevenTop:Disable();
+        Main_cb_MiddlePUnevenBottom:Disable();
 
         getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(
             ColorText(L['SortGroup_Main_cb_Descending_Text'], 'disable'));
@@ -375,10 +346,10 @@ local function UpdateComboBoxes()
             L['SortGroup_Main_cb_Descending_Text'], 'disable'));
         getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(
             ColorText(L['SortGroup_Main_cb_Ascending_Text'], 'disable'));
-        getglobal(Main_cb_MiddleParty1Top:GetName() .. 'Text'):SetText(
-            ColorText(L['SortGroup_Main_cb_Party1Top_Text'], 'disable'));
-        getglobal(Main_cb_MiddleParty2Top:GetName() .. 'Text'):SetText(
-            ColorText(L['SortGroup_Main_cb_Party2Top_Text'], 'disable'));
+        getglobal(Main_cb_MiddleUnevenTop:GetName() .. 'Text'):SetText(
+            ColorText(L['SortGroup_Main_cb_UnevenTop_Text'], 'disable'));
+        getglobal(Main_cb_MiddlePUnevenBottom:GetName() .. 'Text'):SetText(ColorText(
+            L['SortGroup_Main_cb_UnevenBottom_Text'], 'disable'));
     end
 
     -- Top, Ascending/Descending
@@ -406,15 +377,15 @@ local function UpdateComboBoxes()
     end
 
     -- Middle, Party 1 Top/ Party 2 Top
-    if savedValues_DB.MiddleParty1Top then
-        Main_cb_MiddleParty1Top:SetChecked(true);
-        Main_cb_MiddleParty2Top:SetChecked(false);
-    elseif savedValues_DB.MiddleParty2Top then
-        Main_cb_MiddleParty1Top:SetChecked(false);
-        Main_cb_MiddleParty2Top:SetChecked(true);
+    if savedValues_DB.MiddleUnevenTop then
+        Main_cb_MiddleUnevenTop:SetChecked(true);
+        Main_cb_MiddlePUnevenBottom:SetChecked(false);
+    elseif savedValues_DB.MiddleUnevenBottom then
+        Main_cb_MiddleUnevenTop:SetChecked(false);
+        Main_cb_MiddlePUnevenBottom:SetChecked(true);
     else
-        Main_cb_MiddleParty1Top:SetChecked(false);
-        Main_cb_MiddleParty2Top:SetChecked(false);
+        Main_cb_MiddleUnevenTop:SetChecked(false);
+        Main_cb_MiddlePUnevenBottom:SetChecked(false);
     end
 
     -- Chat messages
@@ -423,23 +394,30 @@ local function UpdateComboBoxes()
     else
         Option_cb_ChatMessagesOn:SetChecked(false);
     end
+
+    if savedValues_DB.HideInactiveSlots then
+        Option_cb_HideInactiveSlots:SetChecked(true);
+    else
+        Option_cb_HideInactiveSlots:SetChecked(false);
+    end
 end
 
 -- Hooks for container updates
 local function resetRaidContainer()
     if changeableValues_DB.RaidProfileBlockInCombat then
 
-        hooksecurefunc('CompactUnitFrame_UpdateAll', function(frame)
+        hooksecurefunc('CompactUnitFrame_UpdateVisible', function(frame)
+            if not frame then
+                return;
+            end
             if frame:IsForbidden() then
-                return
+                return;
             end
-            local name = frame:GetName()
-            if not name or not name:match('^Compact') then
-                return
+            local name = frame:GetName();
+            if not name or not name:match('^CompactPartyFrameMember') then
+                return;
             end
-            if not IsInGroup() or GetNumGroupMembers() > 5 then
-                return
-            end
+
             if InCombatLockdown() then
                 if not UpdateTable[frame] then
                     UpdateTable[frame] = true
@@ -480,23 +458,38 @@ local function createText()
     Main_Text_Author:SetFontObject('p', 'GameFontHighlightSmall');
     Main_Text_Author:SetText(intern_authorOutput);
     Main_Text_Author:SetSize(string.len(intern_authorOutput), 10);
+
+    SortBy_Text:SetPoint("TOPLEFT", Main_Title, 10, -105);
+    SortBy_Text:SetFontObject('p', GameFontHighlightMedium);
+    SortBy_Text:SetText(L["SortGroup_SortBy_Text"]);
+    SortBy_Text:SetSize(string.len(L["SortGroup_SortBy_Text"]), 10);
+
+    Option_Text:SetPoint("TOPLEFT", Main_Title, 350, -105);
+    Option_Text:SetFontObject('p', GameFontHighlightMedium);
+    Option_Text:SetText(L["SortGroup_Option_Text"]);
+    Option_Text:SetSize(string.len(L["SortGroup_Option_Text"]), 10);
+
 end
 
 local function createCheckbox()
     -- the three main cbs
-    Main_cb_Top:SetPoint('TOPLEFT', Main_Title, 10, -100);
-    Main_cb_Bottom:SetPoint('TOPLEFT', Main_Title, 10, -200);
+    Main_cb_Top:SetPoint('TOPLEFT', SortBy_Text, 10, -25);
+    Main_cb_Bottom:SetPoint('TOPLEFT', SortBy_Text, 10, -125);
+    Main_cb_Middle:SetPoint('TOPLEFT', SortBy_Text, 10, -225);
 
     -- cb chidlren
     Main_cb_TopDescending:SetPoint('TOPLEFT', 30, -30);
     Main_cb_TopAscending:SetPoint('TOPLEFT', 30, -55);
     Main_cb_BottomDescending:SetPoint('TOPLEFT', 30, -30);
     Main_cb_BottomAscending:SetPoint('TOPLEFT', 30, -55);
+    Main_cb_MiddleUnevenTop:SetPoint('TOPLEFT', 30, -30);
+    Main_cb_MiddlePUnevenBottom:SetPoint('TOPLEFT', 30, -55);
 
     -- set Text to cbs
     -- Main frame
     getglobal(Main_cb_Top:GetName() .. 'Text'):SetText(ColorText(L['SortGroup_Main_cb_Top_Text'], 'white'));
     getglobal(Main_cb_Bottom:GetName() .. 'Text'):SetText(ColorText(L['SortGroup_Main_cb_Bottom_Text'], 'white'));
+    getglobal(Main_cb_Middle:GetName() .. 'Text'):SetText(ColorText(L['SortGroup_Main_cb_Middle_Text'], 'white'));
     getglobal(Main_cb_TopDescending:GetName() .. 'Text'):SetText(
         ColorText(L['SortGroup_Main_cb_Descending_Text'], 'white'));
     getglobal(Main_cb_TopAscending:GetName() .. 'Text'):SetText(
@@ -505,12 +498,20 @@ local function createCheckbox()
         ColorText(L['SortGroup_Main_cb_Descending_Text'], 'white'));
     getglobal(Main_cb_BottomAscending:GetName() .. 'Text'):SetText(
         ColorText(L['SortGroup_Main_cb_Ascending_Text'], 'white'));
+    getglobal(Main_cb_MiddlePUnevenBottom:GetName() .. 'Text'):SetText(
+        ColorText(L['SortGroup_Main_cb_UnevenTop_Text'], 'white'));
+    getglobal(Main_cb_MiddleUnevenTop:GetName() .. 'Text'):SetText(
+        ColorText(L['SortGroup_Main_cb_UnevenBottom_Text'], 'white'));
 
     -- Option frame
-    Option_cb_ChatMessagesOn:SetPoint('TOPLEFT', Main_Title, 400, -100);
+    Option_cb_ChatMessagesOn:SetPoint('TOPLEFT', Option_Text, 10, -25);
+    Option_cb_HideInactiveSlots:SetPoint('TOPLEFT', Option_Text, 10, -50);
 
     getglobal(Option_cb_ChatMessagesOn:GetName() .. 'Text'):SetText(ColorText(
         L['SortGroup_Option_cb_ChatMessagesOn_Text'], 'white'));
+    getglobal(Option_cb_HideInactiveSlots:GetName() .. 'Text'):SetText(ColorText(
+        L['SortGroup_Option_cb_HideInactiveSlots_Text'], 'white'));
+
 end
 
 -- *End Creating*
@@ -545,7 +546,7 @@ local function frameEvent()
                 UpdateTable[frame] = nil
             end
 
-            -- ApplySort();
+            ApplySort();
         elseif event == 'GROUP_ROSTER_UPDATE' then
             ApplySort()
         elseif event == 'PLAYER_ENTERING_WORLD' then
@@ -555,9 +556,6 @@ local function frameEvent()
                 resetRaidContainer(); -- hooks
                 internValues_DB.showChatMessages = true;
                 internValues_DB.firstLoad = false;
-                if Enum.EditModeAccountSetting.ShowTargetAndFocus == 1 then
-                    EditModeManagerFrame:OnAccountSettingChanged(Enum.EditModeAccountSetting.ShowTargetAndFocus, 0);
-                end
             end
             ApplySort();
         end
@@ -644,9 +642,9 @@ local function checkBoxEvent()
                 savedValues_DB.Top = false;
                 savedValues_DB.Bottom = false;
                 savedValues_DB.Middle = true;
-                if Main_cb_MiddleParty1Top:GetChecked() == false and Main_cb_MiddleParty2Top:GetChecked() == false then
-                    savedValues_DB.MiddleParty1Top = true;
-                    Main_cb_MiddleParty1Top:SetChecked(true);
+                if Main_cb_MiddleUnevenTop:GetChecked() == false and Main_cb_MiddlePUnevenBottom:GetChecked() == false then
+                    savedValues_DB.MiddleUnevenTop = true;
+                    Main_cb_MiddleUnevenTop:SetChecked(true);
                 end
             elseif Main_cb_Middle:GetChecked() == false then
                 savedValues_DB.Middle = false;
@@ -791,15 +789,15 @@ local function checkBoxEvent()
         GameTooltip:Hide()
     end)
 
-    -- Combobox Main_cb_MiddleParty1Top
-    Main_cb_MiddleParty1Top:SetScript('OnClick', function()
+    -- Combobox Main_cb_MiddleUnevenTop
+    Main_cb_MiddleUnevenTop:SetScript('OnClick', function()
         if not InCombatLockdown() or changeableValues_DB.ChangesInCombat then
             internValues_DB.showChatMessages = true;
-            if Main_cb_MiddleParty1Top:GetChecked() then
-                savedValues_DB.MiddleParty1Top = true;
-                savedValues_DB.MiddleParty2Top = false;
-            elseif Main_cb_MiddleParty1Top:GetChecked() == false then
-                savedValues_DB.MiddleParty1Top = false;
+            if Main_cb_MiddleUnevenTop:GetChecked() then
+                savedValues_DB.MiddleUnevenTop = true;
+                savedValues_DB.MiddleUnevenBottom = false;
+            elseif Main_cb_MiddleUnevenTop:GetChecked() == false then
+                savedValues_DB.MiddleUnevenTop = false;
             end
             SaveOptions();
             ApplySort();
@@ -811,25 +809,25 @@ local function checkBoxEvent()
             end
         end
     end);
-    Main_cb_MiddleParty1Top:SetScript('OnEnter', function(self)
+    Main_cb_MiddleUnevenTop:SetScript('OnEnter', function(self)
         GameTooltip:SetOwner(self, 'ANCHOR_RIGHT');
-        GameTooltip:AddLine(L['SortGroup_Main_cb_Party1Top_Text'] .. '\n\n' ..
-                                ColorText(L['SortGroup_Main_cb_Party1Top_ToolTip'], 'white'), nil, nil, nil, 1);
+        GameTooltip:AddLine(L['SortGroup_Main_cb_UnevenTop_Text'] .. '\n\n' ..
+                                ColorText(L['SortGroup_Main_cb_UnevenTop_ToolTip'], 'white'), nil, nil, nil, 1);
         GameTooltip:Show();
     end);
-    Main_cb_MiddleParty1Top:SetScript('OnLeave', function(self)
+    Main_cb_MiddleUnevenTop:SetScript('OnLeave', function(self)
         GameTooltip:Hide()
     end)
 
-    -- Combobox Main_cb_MiddleParty2Top
-    Main_cb_MiddleParty2Top:SetScript('OnClick', function()
+    -- Combobox Main_cb_MiddlePUnevenBottom
+    Main_cb_MiddlePUnevenBottom:SetScript('OnClick', function()
         if not InCombatLockdown() or changeableValues_DB.ChangesInCombat then
             internValues_DB.showChatMessages = true;
-            if Main_cb_MiddleParty2Top:GetChecked() then
-                savedValues_DB.MiddleParty1Top = false;
-                savedValues_DB.MiddleParty2Top = true;
-            elseif Main_cb_MiddleParty2Top:GetChecked() == false then
-                savedValues_DB.MiddleParty2Top = false;
+            if Main_cb_MiddlePUnevenBottom:GetChecked() then
+                savedValues_DB.MiddleUnevenTop = false;
+                savedValues_DB.MiddleUnevenBottom = true;
+            elseif Main_cb_MiddlePUnevenBottom:GetChecked() == false then
+                savedValues_DB.MiddleUnevenBottom = false;
             end
             SaveOptions();
             ApplySort();
@@ -841,13 +839,13 @@ local function checkBoxEvent()
             end
         end
     end);
-    Main_cb_MiddleParty2Top:SetScript('OnEnter', function(self)
+    Main_cb_MiddlePUnevenBottom:SetScript('OnEnter', function(self)
         GameTooltip:SetOwner(self, 'ANCHOR_RIGHT');
-        GameTooltip:AddLine(L['SortGroup_Main_cb_Party2Top_Text'] .. '\n\n' ..
-                                ColorText(L['SortGroup_Main_cb_Party2Top_ToolTip'], 'white'), nil, nil, nil, 1);
+        GameTooltip:AddLine(L['SortGroup_Main_cb_UnevenBottom_Text'] .. '\n\n' ..
+                                ColorText(L['SortGroup_Main_cb_UnivenBottom_ToolTip'], 'white'), nil, nil, nil, 1);
         GameTooltip:Show();
     end);
-    Main_cb_MiddleParty2Top:SetScript('OnLeave', function(self)
+    Main_cb_MiddlePUnevenBottom:SetScript('OnLeave', function(self)
         GameTooltip:Hide()
     end)
 
@@ -876,6 +874,31 @@ local function checkBoxEvent()
         GameTooltip:Show();
     end);
     Option_cb_ChatMessagesOn:SetScript('OnLeave', function(self)
+        GameTooltip:Hide()
+    end)
+
+    -- Combobox Option_cb_HideInactiveSlots
+    Option_cb_HideInactiveSlots:SetScript('OnClick', function()
+        if not InCombatLockdown() or changeableValues_DB.ChangesInCombat then
+            if Option_cb_HideInactiveSlots:GetChecked() then
+                savedValues_DB.HideInactiveSlots = true;
+            else
+                savedValues_DB.HideInactiveSlots = false;
+            end
+            SaveOptions();
+            ApplySort();
+            UpdateComboBoxes();
+        else
+            UpdateComboBoxes();
+        end
+    end);
+    Option_cb_HideInactiveSlots:SetScript('OnEnter', function(self)
+        GameTooltip:SetOwner(self, 'ANCHOR_RIGHT');
+        GameTooltip:AddLine(L['SortGroup_Option_cb_HideInactiveSlots_Text'] .. '\n\n' ..
+                                ColorText(L['SortGroup_Option_cb_HideInactiveSlots_Tooltip'], 'white'), nil, nil, nil, 1);
+        GameTooltip:Show();
+    end);
+    Option_cb_HideInactiveSlots:SetScript('OnLeave', function(self)
         GameTooltip:Hide()
     end)
 end
