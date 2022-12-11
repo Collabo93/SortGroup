@@ -406,6 +406,10 @@ end
 local function resetRaidContainer()
     if changeableValues_DB.RaidProfileBlockInCombat then
 
+        for _, frame in ipairs(ActionBarButtonEventsFrame.frames) do
+            hooksecurefunc(frame, "UpdateAction", checkFrame);
+        end
+
         hooksecurefunc('CompactUnitFrame_UpdateVisible', function(frame)
             if not frame then
                 return;
@@ -529,13 +533,21 @@ local function loadData()
     end
 end
 
+function checkFrame(frame)
+    if not issecurevariable(frame, "action") and not InCombatLockdown() then
+        frame.action = nil
+        frame:SetAttribute("action");
+    end
+end
+
 -- Events
 local function frameEvent()
     Main_Frame:RegisterEvent('PLAYER_LOGOUT');
     Main_Frame:RegisterEvent('PLAYER_REGEN_ENABLED');
     Main_Frame:RegisterEvent('GROUP_ROSTER_UPDATE');
     Main_Frame:RegisterEvent('PLAYER_ENTERING_WORLD');
-    Main_Frame:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
+    Main_Frame:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED");
+    -- Main_Frame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED");
 
     Main_Frame:SetScript('OnEvent', function(self, event, ...)
         if event == 'PLAYER_LOGOUT' then
@@ -549,6 +561,10 @@ local function frameEvent()
             ApplySort();
         elseif event == 'GROUP_ROSTER_UPDATE' then
             ApplySort()
+        elseif event == 'ACTIVE_TALENT_GROUP_CHANGED' then
+            for frame, _ in ipairs(ActionBarButtonEventsFrame.frames) do
+                checkFrame(frame);
+            end
         elseif event == 'PLAYER_ENTERING_WORLD' then
             if internValues_DB.firstLoad then
                 loadData();
@@ -556,6 +572,9 @@ local function frameEvent()
                 resetRaidContainer(); -- hooks
                 internValues_DB.showChatMessages = true;
                 internValues_DB.firstLoad = false;
+                -- if Enum.EditModeAccountSetting.ShowTargetAndFocus == 1 then
+                --     EditModeManagerFrame:OnAccountSettingChanged(Enum.EditModeAccountSetting.ShowTargetAndFocus, 0);
+                -- end
             end
             ApplySort();
         end
