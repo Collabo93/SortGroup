@@ -60,7 +60,7 @@ local Main_Text_Version = CreateFrame('SimpleHTML', 'MainTextVersion', Main_Fram
 local Main_Text_Author = CreateFrame('SimpleHTML', 'MainTextAuthor', Main_Frame);
 local SortBy_Text = CreateFrame('SimpleHTML', 'SortBy_Text', Main_Frame);
 local Option_Text = CreateFrame('SimpleHTML', 'Option_Text', Main_Frame);
-local intern_version = '5.2.0';
+local intern_version = '5.2.02';
 local intern_versionOutput = '|cFF00FF00Version|r  ' .. intern_version;
 local intern_author = 'Collabo93';
 local intern_authorOutput = '|cFF00FF00Author|r   ' .. intern_author;
@@ -112,53 +112,50 @@ end
 
 function ApplyFilter(filter)
 
-    if IsInGroup() and GetNumGroupMembers() <= 5 and HasLoadedCUFProfiles() then
+    -- possible implementation for other frames
+    local frames = {
+        ["Blizzard"] = "CompactPartyFrameMember"
+        -- ["ElvUI"] = "ElvUF_PartyGroup"
+    };
 
-        -- possible implementation for other frames
-        local frames = {
-            ["Blizzard"] = "CompactPartyFrameMember"
-            -- ["ElvUI"] = "ElvUF_PartyGroup"
-        };
+    local units = {};
 
-        local units = {};
-
-        for index, token in ipairs(filter) do
-            table.insert(units, token);
-        end
-
-        for index, realPartyMemberToken in ipairs(units) do
-            local unitFrame = _G[frames.Blizzard .. index];
-            CompactUnitFrame_ClearWidgetSet(unitFrame);
-            unitFrame:Hide();
-            unitFrame.unitExists = false;
-        end
-
-        local playerDiplayed = false;
-        for index, realPartyMemberToken in ipairs(units) do
-            local unitFrame = _G[frames.Blizzard .. index];
-            local usePlayerOverride = EditModeManagerFrame:ArePartyFramesForcedShown() and
-                                          not UnitExists(realPartyMemberToken);
-            local unitToken = usePlayerOverride and "player" or realPartyMemberToken;
-
-            if savedValues_DB.HideInactiveSlots and not UnitExists(unitToken) then
-                if playerDiplayed then
-                    return false;
-                end
-                unitToken = "player";
-            end
-
-            if unitToken == "player" then
-                playerDiplayed = true;
-            end
-
-            CompactUnitFrame_SetUnit(unitFrame, unitToken);
-            CompactUnitFrame_SetUpFrame(unitFrame, DefaultCompactUnitFrameSetup);
-            CompactUnitFrame_SetUpdateAllEvent(unitFrame, "GROUP_ROSTER_UPDATE");
-        end
-
-        CompactRaidGroup_UpdateBorder(CompactPartyFrame);
-        PartyFrame:UpdatePaddingAndLayout();
+    for index, token in ipairs(filter) do
+        table.insert(units, token);
     end
+
+    for index, realPartyMemberToken in ipairs(units) do
+        local unitFrame = _G[frames.Blizzard .. index];
+        CompactUnitFrame_ClearWidgetSet(unitFrame);
+        unitFrame:Hide();
+        unitFrame.unitExists = false;
+    end
+
+    local playerDiplayed = false;
+    for index, realPartyMemberToken in ipairs(units) do
+        local unitFrame = _G[frames.Blizzard .. index];
+        local usePlayerOverride = EditModeManagerFrame:ArePartyFramesForcedShown() and
+                                      not UnitExists(realPartyMemberToken);
+        local unitToken = usePlayerOverride and "player" or realPartyMemberToken;
+
+        if savedValues_DB.HideInactiveSlots and not UnitExists(unitToken) then
+            if playerDiplayed then
+                return false;
+            end
+            unitToken = "player";
+        end
+
+        if unitToken == "player" then
+            playerDiplayed = true;
+        end
+
+        CompactUnitFrame_SetUnit(unitFrame, unitToken);
+        CompactUnitFrame_SetUpFrame(unitFrame, DefaultCompactUnitFrameSetup);
+        CompactUnitFrame_SetUpdateAllEvent(unitFrame, "GROUP_ROSTER_UPDATE");
+    end
+
+    CompactRaidGroup_UpdateBorder(CompactPartyFrame);
+    PartyFrame:UpdatePaddingAndLayout();
 end
 
 local function optionsCorrect()
@@ -177,7 +174,8 @@ end
 local function ApplySort()
 
     -- combat status check
-    if not InCombatLockdown() and optionsCorrect() then
+    if not InCombatLockdown() and optionsCorrect() and IsInGroup() and GetNumGroupMembers() <= 5 and
+        HasLoadedCUFProfiles() then
 
         -- Everything is fine, sorting can get applied
         if savedValues_DB.Top then
@@ -410,26 +408,13 @@ local function resetRaidContainer()
             hooksecurefunc(frame, "UpdateAction", checkFrame);
         end
 
-        hooksecurefunc('CompactUnitFrame_UpdateVisible', function(frame)
-            if not frame then
-                return;
-            end
-            if frame:IsForbidden() then
-                return;
-            end
-            local name = frame:GetName();
-            if not name or not name:match('^CompactPartyFrameMember') then
-                return;
-            end
+        -- hooksecurefunc('CompactPartyFrame_RefreshMembers', function(frame)
+        --     print("CompactPartyFrame_RefreshMembers");
+        -- end)
 
-            if InCombatLockdown() then
-                if not UpdateTable[frame] then
-                    UpdateTable[frame] = true
-                end
-            else
-                return;
-            end
-        end)
+        -- hooksecurefunc('CompactPartyFrame_SetFlowSortFunction', function(frame)
+        --     print("CompactPartyFrame_SetFlowSortFunction");
+        -- end)
     end
 end
 
@@ -536,7 +521,7 @@ end
 function checkFrame(frame)
     if not issecurevariable(frame, "action") and not InCombatLockdown() then
         frame.action = nil
-        frame:SetAttribute("action");
+        frame:SetAttribute('_v', "action");
     end
 end
 
@@ -546,8 +531,7 @@ local function frameEvent()
     Main_Frame:RegisterEvent('PLAYER_REGEN_ENABLED');
     Main_Frame:RegisterEvent('GROUP_ROSTER_UPDATE');
     Main_Frame:RegisterEvent('PLAYER_ENTERING_WORLD');
-    Main_Frame:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED");
-    -- Main_Frame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED");
+    Main_Frame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED");
 
     Main_Frame:SetScript('OnEvent', function(self, event, ...)
         if event == 'PLAYER_LOGOUT' then
@@ -560,6 +544,7 @@ local function frameEvent()
 
             ApplySort();
         elseif event == 'GROUP_ROSTER_UPDATE' then
+            -- print("GROUP_ROSTER_UPDATE");
             ApplySort()
         elseif event == 'ACTIVE_TALENT_GROUP_CHANGED' then
             for frame, _ in ipairs(ActionBarButtonEventsFrame.frames) do
@@ -572,9 +557,6 @@ local function frameEvent()
                 resetRaidContainer(); -- hooks
                 internValues_DB.showChatMessages = true;
                 internValues_DB.firstLoad = false;
-                -- if Enum.EditModeAccountSetting.ShowTargetAndFocus == 1 then
-                --     EditModeManagerFrame:OnAccountSettingChanged(Enum.EditModeAccountSetting.ShowTargetAndFocus, 0);
-                -- end
             end
             ApplySort();
         end
