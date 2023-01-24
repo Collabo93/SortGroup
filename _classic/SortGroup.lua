@@ -43,7 +43,7 @@ local Option_Title = Option_Frame:CreateFontString("OptionTitle", "OVERLAY", "Ga
 
 local Main_Text_Version = CreateFrame("SimpleHTML", "MainTextVersion", Main_Frame);
 local Main_Text_Author = CreateFrame("SimpleHTML", "MainTextAuthor", Main_Frame);
-local intern_version = "5.0.2 WotLK";
+local intern_version = "5.0.2 WotLK - Beta";
 local intern_versionOutput = "|cFF00FF00Version|r  " .. intern_version
 local intern_author = "Collabo93"
 local intern_authorOutput = "|cFF00FF00Author|r   " .. intern_author

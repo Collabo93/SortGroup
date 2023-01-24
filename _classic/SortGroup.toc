@@ -1,6 +1,6 @@
 ## Interface: 30401
 ## Title: SortGroup
-## Version: 5.0.2 WotLK
+## Version: 5.0.2 WotLK - Beta
 ## Author: Collabo93
 ## Notes: Sort your group by Party 1-4
 ## SavedVariables: SortGroupDefaults
