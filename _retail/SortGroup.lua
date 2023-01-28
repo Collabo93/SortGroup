@@ -24,7 +24,7 @@ local savedValues_DB = {};
 
 -- filters
 -- change Strings, if you want a specific filter
-local filter_DB = {
+local filter = {
     top = {
         descending = {"player", "party1", "party2", "party3", "party4"},
         ascending = {"player", "party4", "party3", "party2", "party1"}
@@ -52,6 +52,9 @@ local internValues_DB = {
 }
 
 local UpdateTable = {}
+
+local actionButtonFrames = ActionBarButtonEventsFrame.frames;
+table.insert(actionButtonFrames, _G["UpdatePressAndHoldAction"]);
 -- *End Variables*
 
 -- Text
@@ -60,7 +63,7 @@ local Main_Text_Version = CreateFrame('SimpleHTML', 'MainTextVersion', Main_Fram
 local Main_Text_Author = CreateFrame('SimpleHTML', 'MainTextAuthor', Main_Frame);
 local SortBy_Text = CreateFrame('SimpleHTML', 'SortBy_Text', Main_Frame);
 local Option_Text = CreateFrame('SimpleHTML', 'Option_Text', Main_Frame);
-local intern_version = '5.2.02';
+local intern_version = '5.2.03';
 local intern_versionOutput = '|cFF00FF00Version|r  ' .. intern_version;
 local intern_author = 'Collabo93';
 local intern_authorOutput = '|cFF00FF00Author|r   ' .. intern_author;
@@ -180,7 +183,7 @@ local function ApplySort()
         -- Everything is fine, sorting can get applied
         if savedValues_DB.Top then
             if savedValues_DB.TopDescending then
-                ApplyFilter(filter_DB.top.descending);
+                ApplyFilter(filter.top.descending);
                 if internValues_DB.showChatMessages then
                     if savedValues_DB.ChatMessagesOn then
                         print(ColorText(L['SortGroup_sort_top_descending_output'], 'option'));
@@ -189,7 +192,7 @@ local function ApplySort()
 
             end
             if savedValues_DB.TopAscending then
-                ApplyFilter(filter_DB.top.ascending);
+                ApplyFilter(filter.top.ascending);
                 if internValues_DB.showChatMessages then
                     if savedValues_DB.ChatMessagesOn then
                         print(ColorText(L['SortGroup_sort_top_ascending_output'], 'option'));
@@ -199,7 +202,7 @@ local function ApplySort()
             end
         elseif savedValues_DB.Bottom then
             if savedValues_DB.BottomDescending then
-                ApplyFilter(filter_DB.bottom.descending);
+                ApplyFilter(filter.bottom.descending);
                 if internValues_DB.showChatMessages then
                     if savedValues_DB.ChatMessagesOn then
                         print(ColorText(L['SortGroup_sort_top_descending_output'], 'option'));
@@ -208,7 +211,7 @@ local function ApplySort()
 
             end
             if savedValues_DB.BottomAscending then
-                ApplyFilter(filter_DB.bottom.ascending);
+                ApplyFilter(filter.bottom.ascending);
                 if internValues_DB.showChatMessages then
                     if savedValues_DB.ChatMessagesOn then
                         print(ColorText(L['SortGroup_sort_bottom_ascending_output'], 'option'));
@@ -218,7 +221,7 @@ local function ApplySort()
             end
         elseif savedValues_DB.Middle then
             if savedValues_DB.MiddleUnevenTop then
-                ApplyFilter(filter_DB.middle.unevenTop);
+                ApplyFilter(filter.middle.unevenTop);
                 if internValues_DB.showChatMessages then
                     if savedValues_DB.ChatMessagesOn then
                         print(ColorText(L['SortGroup_sort_uneven_top_output'], 'option'));
@@ -227,7 +230,7 @@ local function ApplySort()
 
             end
             if savedValues_DB.MiddleUnevenBottom then
-                ApplyFilter(filter_DB.middle.unevenBottom);
+                ApplyFilter(filter.middle.unevenBottom);
                 if internValues_DB.showChatMessages then
                     if savedValues_DB.ChatMessagesOn then
                         print(ColorText(L['SortGroup_sort_uneven_bottom_output'], 'option'));
@@ -401,12 +404,33 @@ local function UpdateComboBoxes()
 end
 
 -- Hooks for container updates
-local function resetRaidContainer()
+local function applyHooks()
     if changeableValues_DB.RaidProfileBlockInCombat then
 
-        for _, frame in ipairs(ActionBarButtonEventsFrame.frames) do
+        for _, frame in ipairs(actionButtonFrames) do
             hooksecurefunc(frame, "UpdateAction", checkFrame);
         end
+
+        hooksecurefunc('CompactUnitFrame_SetUnit', function(frame, token, ...)
+            if frame:IsForbidden() then
+                return
+            end
+            local name = frame:GetName()
+            if not name or not name:match('^Compact') then
+                return
+            end
+            if not IsInGroup() or GetNumGroupMembers() > 5 then
+                return
+            end
+            if InCombatLockdown() then
+                print("Block CompactUnitFrame_SetUnit")
+                if not UpdateTable[frame] then
+                    UpdateTable[frame] = true
+                end
+            else
+                return;
+            end
+        end)
 
         -- hooksecurefunc('CompactPartyFrame_RefreshMembers', function(frame)
         --     print("CompactPartyFrame_RefreshMembers");
@@ -544,17 +568,17 @@ local function frameEvent()
 
             ApplySort();
         elseif event == 'GROUP_ROSTER_UPDATE' then
-            -- print("GROUP_ROSTER_UPDATE");
-            ApplySort()
+            print("GROUP_ROSTER_UPDATE");
+            -- ApplySort();
         elseif event == 'ACTIVE_TALENT_GROUP_CHANGED' then
-            for frame, _ in ipairs(ActionBarButtonEventsFrame.frames) do
+            for frame, _ in ipairs(actionButtonFrames) do
                 checkFrame(frame);
             end
         elseif event == 'PLAYER_ENTERING_WORLD' then
             if internValues_DB.firstLoad then
                 loadData();
                 UpdateComboBoxes();
-                resetRaidContainer(); -- hooks
+                applyHooks();
                 internValues_DB.showChatMessages = true;
                 internValues_DB.firstLoad = false;
             end

@@ -1,6 +1,6 @@
-## Interface: 100002
+## Interface: 100005
 ## Title: SortGroup
-## Version: 5.2.02
+## Version: 5.2.03
 ## Author: Collabo93
 ## Notes: Sort your group by Party 1-4
 ## SavedVariablesPerCharacter: SortGroupInformation
