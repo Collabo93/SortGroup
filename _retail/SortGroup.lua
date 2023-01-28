@@ -568,8 +568,7 @@ local function frameEvent()
 
             ApplySort();
         elseif event == 'GROUP_ROSTER_UPDATE' then
-            print("GROUP_ROSTER_UPDATE");
-            -- ApplySort();
+            ApplySort();
         elseif event == 'ACTIVE_TALENT_GROUP_CHANGED' then
             for frame, _ in ipairs(actionButtonFrames) do
                 checkFrame(frame);
